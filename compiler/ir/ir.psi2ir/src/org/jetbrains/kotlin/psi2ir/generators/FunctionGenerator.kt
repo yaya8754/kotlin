@@ -43,7 +43,7 @@ class FunctionGenerator(declarationGenerator: DeclarationGenerator) : Declaratio
         declareSimpleFunction(
             ktFunction,
             ktFunction.receiverTypeReference,
-            ktFunction.contextReceiverTypeReferences,
+            ktFunction.contextReceivers.mapNotNull { it.typeReference() },
             IrDeclarationOrigin.DEFINED,
             getOrFail(BindingContext.FUNCTION, ktFunction)
         ) {
@@ -119,7 +119,7 @@ class FunctionGenerator(declarationGenerator: DeclarationGenerator) : Declaratio
             irAccessor.returnType = irAccessor.descriptor.returnType!!.toIrType()
             generateValueParameterDeclarations(
                 irAccessor, ktAccessor ?: ktProperty, ktProperty.receiverTypeReference,
-                ktProperty.contextReceiverTypeReferences
+                ktProperty.contextReceivers.mapNotNull { it.typeReference() }
             )
             val ktBodyExpression = ktAccessor?.bodyExpression
             irAccessor.body =
@@ -230,7 +230,7 @@ class FunctionGenerator(declarationGenerator: DeclarationGenerator) : Declaratio
         declareConstructor(
             ktClassOrObject,
             ktClassOrObject.primaryConstructor ?: ktClassOrObject,
-            ktClassOrObject.contextReceiverTypeReferences,
+            ktClassOrObject.contextReceivers.mapNotNull { it.typeReference() },
             primaryConstructorDescriptor
         ) { irConstructor ->
             if (
@@ -248,7 +248,7 @@ class FunctionGenerator(declarationGenerator: DeclarationGenerator) : Declaratio
         return declareConstructor(
             ktConstructor,
             ktConstructor,
-            ktClassOrObject.contextReceiverTypeReferences,
+            ktClassOrObject.contextReceivers.mapNotNull { it.typeReference() },
             constructorDescriptor
         ) {
             when {
