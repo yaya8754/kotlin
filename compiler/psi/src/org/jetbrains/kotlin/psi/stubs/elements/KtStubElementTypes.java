@@ -142,6 +142,9 @@ public interface KtStubElementTypes {
     KtPlaceHolderStubElementType<KtConstructorCalleeExpression> CONSTRUCTOR_CALLEE =
             new KtPlaceHolderStubElementType<>("CONSTRUCTOR_CALLEE", KtConstructorCalleeExpression.class);
 
+    KtPlaceHolderStubElementType<KtContextReceiver> CONTEXT_RECEIVER =
+            new KtPlaceHolderStubElementType<>("CONTEXT_RECEIVER", KtContextReceiver.class);
+
     KtConstantExpressionElementType NULL                = new KtConstantExpressionElementType("NULL");
     KtConstantExpressionElementType BOOLEAN_CONSTANT    = new KtConstantExpressionElementType("BOOLEAN_CONSTANT");
     KtConstantExpressionElementType FLOAT_CONSTANT      = new KtConstantExpressionElementType("FLOAT_CONSTANT");
