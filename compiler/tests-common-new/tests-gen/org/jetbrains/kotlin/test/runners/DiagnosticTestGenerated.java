@@ -9990,6 +9990,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("contextReceiver.kt")
+            public void testContextReceiver() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/extensions/contextReceiver.kt");
+            }
+
+            @Test
             @TestMetadata("ExtensionFunctions.kt")
             public void testExtensionFunctions() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/extensions/ExtensionFunctions.kt");
