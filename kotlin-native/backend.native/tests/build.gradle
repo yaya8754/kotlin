@@ -1329,6 +1329,10 @@ task initializers_correctOrder2(type: KonanLocalTest) {
     source = "codegen/initializers/correctOrder2.kt"
 }
 
+standaloneTest("initializers_globalInitedBeforeThreadLocal") {
+    source = "codegen/initializers/globalInitedBeforeThreadLocal.kt"
+}
+
 linkTest("initializers_linkTest1") {
     goldValue = "1200\n"
     source = "codegen/initializers/linkTest1_main.kt"
