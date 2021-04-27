@@ -1329,6 +1329,10 @@ task initializers_correctOrder2(type: KonanLocalTest) {
     source = "codegen/initializers/correctOrder2.kt"
 }
 
+standaloneTest("initializers_globalInitedAfterAccessingFile") {
+    source = "codegen/initializers/globalInitedAfterAccessingFile.kt"
+}
+
 standaloneTest("initializers_globalInitedBeforeThreadLocal") {
     source = "codegen/initializers/globalInitedBeforeThreadLocal.kt"
 }
