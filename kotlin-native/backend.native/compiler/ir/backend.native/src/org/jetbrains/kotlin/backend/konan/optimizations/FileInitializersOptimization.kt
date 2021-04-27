@@ -401,8 +401,11 @@ internal object FileInitializersOptimization {
                     val file = actualCallee.fileOrNull
                     val fileId = file?.let { initializedFiles.fileIds[it]!! } ?: 0
                     if (analysisGoal == AnalysisGoal.CollectCallSites && file != null
-                            && !actualCallee.isOverridable // Only extract initializer calls from non-virtual functions.
-                            && !initializedFiles.beforeCall[actualCallee]!!.get(fileId)) {
+                            // Only extract initializer calls from non-virtual functions.
+                            && !actualCallee.isOverridable
+                            // The initializer won't be optimized away from the function.
+                            && !initializedFiles.beforeCall[actualCallee]!!.get(fileId)
+                    ) {
                         if (curData.get(fileId))
                             callSitesNotRequiringInitializerCall += expression
                         else
