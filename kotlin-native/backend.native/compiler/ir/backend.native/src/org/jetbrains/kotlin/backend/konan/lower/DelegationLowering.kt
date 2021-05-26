@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.backend.konan.descriptors.synthesizedName
 import org.jetbrains.kotlin.backend.konan.ir.buildSimpleAnnotation
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.ir.builders.*
+import org.jetbrains.kotlin.ir.builders.declarations.buildFun
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.impl.IrFieldImpl
 import org.jetbrains.kotlin.ir.expressions.IrExpression
@@ -161,11 +162,23 @@ internal class PropertyDelegationLowering(val context: Context) : FileLoweringPa
 
         if (kProperties.isNotEmpty()) {
             val initializers = kProperties.values.sortedBy { it.second }.map { it.first }
-            // TODO: move to object for lazy initialization.
-            irFile.declarations.add(0, kPropertiesField.apply {
-                initializer = IrExpressionBodyImpl(startOffset, endOffset,
-                        context.createArrayOfExpression(startOffset, endOffset, kPropertyImplType, initializers))
-            })
+            // TODO: replace with static initialization.
+            val kPropertiesInitializer = context.irFactory.buildFun {
+                startOffset = SYNTHETIC_OFFSET
+                endOffset = SYNTHETIC_OFFSET
+                origin = DECLARATION_ORIGIN_MODULE_INITIALIZER
+                name = Name.identifier("\$kProperties_init")
+                visibility = DescriptorVisibilities.PRIVATE
+                returnType = context.irBuiltIns.unitType
+            }.apply {
+                parent = irFile
+                body = context.createIrBuilder(symbol, startOffset, endOffset).irBlockBody {
+                    +irSetField(null, kPropertiesField,
+                            this@PropertyDelegationLowering.context.createArrayOfExpression(startOffset, endOffset, kPropertyImplType, initializers))
+                }
+            }
+            irFile.declarations.add(0, kPropertiesField)
+            irFile.declarations.add(1, kPropertiesInitializer)
         }
     }
 
