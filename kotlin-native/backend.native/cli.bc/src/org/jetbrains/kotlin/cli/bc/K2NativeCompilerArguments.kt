@@ -297,6 +297,9 @@ class K2NativeCompilerArguments : CommonCompilerArguments() {
     @Argument(value="-Xdestroy-runtime-mode", valueDescription = "<mode>", description = "When to destroy runtime. 'legacy' and 'on-shutdown' are currently supported. NOTE: 'legacy' mode is deprecated and will be removed.")
     var destroyRuntimeMode: String? = "on-shutdown"
 
+    @Argument(value = "-Xir-property-lazy-initialization", description = "Initialize top level properties lazily per file")
+    var propertyLazyInitialization: Boolean = false
+
     override fun configureAnalysisFlags(collector: MessageCollector): MutableMap<AnalysisFlag<*>, Any> =
             super.configureAnalysisFlags(collector).also {
                 val useExperimental = it[AnalysisFlags.useExperimental] as List<*>

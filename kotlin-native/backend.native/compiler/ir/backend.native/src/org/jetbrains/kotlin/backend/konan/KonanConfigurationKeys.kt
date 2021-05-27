@@ -152,6 +152,8 @@ class KonanConfigKeys {
                 = CompilerConfigurationKey.create("override konan.properties values")
         val DESTROY_RUNTIME_MODE: CompilerConfigurationKey<DestroyRuntimeMode>
                 = CompilerConfigurationKey.create("when to destroy runtime")
+        val PROPERTY_LAZY_INITIALIZATION: CompilerConfigurationKey<Boolean>
+                = CompilerConfigurationKey.create("lazy top level properties initialization")
     }
 }
 

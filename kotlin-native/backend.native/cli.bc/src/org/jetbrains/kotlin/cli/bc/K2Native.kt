@@ -262,6 +262,7 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
                         DestroyRuntimeMode.ON_SHUTDOWN
                     }
                 })
+                put(PROPERTY_LAZY_INITIALIZATION, arguments.propertyLazyInitialization)
             }
         }
     }

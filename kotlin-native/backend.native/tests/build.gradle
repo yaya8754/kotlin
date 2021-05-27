@@ -2148,10 +2148,25 @@ standaloneTest("link_testLib_explicitly") {
     enabled = project.target.name == project.hostName
 
     dependsOn installTestLib
-    goldValue = "Hello\n"
+    goldValue = "This is a side effect of a test library linked into the binary.\nYou should not be seeing this.\n\nHello\n"
     source = "link/omit/hello.kt"
     // We force library inclusion, so need to see the warning banner.
     flags = ['-l', 'testLibrary', '-r', testLibraryDir]
+    doLast {
+        def file = new File("$testLibraryDir/testLibrary")
+        file.deleteDir()
+    }
+}
+
+standaloneTest("link_testLib_explicitly_property_lazy_init") {
+    // there are no testLibrary for cross targets yet.
+    enabled = project.target.name == project.hostName
+
+    dependsOn installTestLib
+    goldValue = "Hello\n"
+    source = "link/omit/hello.kt"
+    // We force library inclusion, so need to see the warning banner.
+    flags = ['-l', 'testLibrary', '-r', testLibraryDir, '-Xir-property-lazy-initialization']
     doLast {
         def file = new File("$testLibraryDir/testLibrary")
         file.deleteDir()
