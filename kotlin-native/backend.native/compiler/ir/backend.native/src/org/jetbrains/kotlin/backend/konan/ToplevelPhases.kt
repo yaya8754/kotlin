@@ -464,6 +464,9 @@ internal fun PhaseConfig.konanPhasesConfig(config: KonanConfig) {
         disableUnless(ghaPhase, getBoolean(KonanConfigKeys.OPTIMIZATION))
         disableUnless(verifyBitcodePhase, config.needCompilerVerification || getBoolean(KonanConfigKeys.VERIFY_BITCODE))
 
+        disableUnless(fileInitializersPhase, getBoolean(KonanConfigKeys.PROPERTY_LAZY_INITIALIZATION))
+        disableUnless(removeRedundantCallsToFileInitializersPhase, getBoolean(KonanConfigKeys.PROPERTY_LAZY_INITIALIZATION))
+
         val isDescriptorsOnlyLibrary = config.metadataKlib == true
         disableIf(psiToIrPhase, isDescriptorsOnlyLibrary)
         disableIf(destroySymbolTablePhase, isDescriptorsOnlyLibrary)
