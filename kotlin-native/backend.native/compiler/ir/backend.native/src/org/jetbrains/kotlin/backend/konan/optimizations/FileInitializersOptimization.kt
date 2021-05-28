@@ -61,6 +61,8 @@ internal object FileInitializersOptimization {
         val afterCall = mutableMapOf<IrFunction, BitSet>()
     }
 
+    private val invalidFileId = 0
+
     private class InterproceduralAnalysis(val context: Context, val callGraph: CallGraph,
                                           val rootSet: Set<IrFunction>) {
         fun analyze(): AnalysisResult {
@@ -248,6 +250,8 @@ internal object FileInitializersOptimization {
             val initializedFilesAtLoopsContinues = mutableMapOf<IrLoop, BitSet>()
             val builder = context.createIrBuilder(caller.symbol)
             val block = builder.irBlock { body.statements.forEach { +it } }
+            // Each visitXXX function gets as [data] parameter the set of initialized files before evaluating
+            // current element and returns the set of initialized files after evaluating this element.
             block.accept(object : IrElementVisitor<BitSet, BitSet> {
                 private fun intersectInitializedFiles(previous: BitSet?, current: BitSet) =
                         previous?.copy()?.also { it.and(current) } ?: current
@@ -313,12 +317,11 @@ internal object FileInitializersOptimization {
                         }
 
                 override fun visitContainerExpression(expression: IrContainerExpression, data: BitSet): BitSet {
-                    var set = data
-                    expression.statements.forEach { set = it.accept(this, set) }
+                    val result = expression.statements.fold(data) { set, statement -> statement.accept(this, set) }
                     return if (expression !is IrReturnableBlock)
-                        set
+                        result
                     else {
-                        updateResultForReturnTarget(expression.symbol, set)
+                        updateResultForReturnTarget(expression.symbol, result)
                         returnTargetsInitializedFiles[expression.symbol]!!
                     }
                 }
@@ -385,7 +388,7 @@ internal object FileInitializersOptimization {
                     if (constructor != null) {
                         updateResultForFunction(constructor, data)
                     } else {
-                        require(objectClass.isExternal || objectClass is IrLazyClass)
+                        require(objectClass.isExternal || objectClass is IrLazyClass) { "No constructor for ${objectClass.render()}" }
                     }
                     val file = objectClass.fileOrNull ?: return data
                     val fileId = initializedFiles.fileIds[file]!!
@@ -395,23 +398,22 @@ internal object FileInitializersOptimization {
 
                 private fun processCall(expression: IrFunctionAccessExpression, actualCallee: IrFunction, data: BitSet): BitSet {
                     val arguments = expression.getArgumentsWithIr()
-                    var curData = data
-                    arguments.forEach { curData = it.second.accept(this, curData) }
-                    updateResultForFunction(actualCallee, curData)
+                    val argumentsResult = arguments.fold(data) { set, arg -> arg.second.accept(this, set) }
+                    updateResultForFunction(actualCallee, argumentsResult)
                     val file = actualCallee.fileOrNull
-                    val fileId = file?.let { initializedFiles.fileIds[it]!! } ?: 0
+                    val fileId = file?.let { initializedFiles.fileIds[it]!! } ?: invalidFileId
                     if (analysisGoal == AnalysisGoal.CollectCallSites && file != null
                             // Only extract initializer calls from non-virtual functions.
                             && !actualCallee.isOverridable
                             // The initializer won't be optimized away from the function.
                             && !initializedFiles.beforeCall[actualCallee]!!.get(fileId)
                     ) {
-                        if (curData.get(fileId))
+                        if (argumentsResult.get(fileId))
                             callSitesNotRequiringInitializerCall += expression
                         else
                             callSitesRequiringInitializerCall += expression
                     }
-                    return getResultAfterCall(actualCallee, curData)
+                    return getResultAfterCall(actualCallee, argumentsResult)
                 }
 
                 private fun processExecuteImpl(expression: IrCall, data: BitSet): BitSet {
@@ -439,22 +441,21 @@ internal object FileInitializersOptimization {
                         return processCall(expression, expression.actualCallee, data)
                     val devirtualizedCallSite = virtualCallSites[expression] ?: return data
                     val arguments = expression.getArgumentsWithIr()
-                    var curData = data
-                    arguments.forEach { curData = it.second.accept(this, curData) }
-                    var set = BitSet()
+                    val argumentsResult = arguments.fold(data) { set, arg -> arg.second.accept(this, set) }
+                    var callResult = BitSet()
                     var first = true
                     for (callSite in devirtualizedCallSite) {
                         val callee = callSite.actualCallee.irFunction ?: error("No IR for: ${callSite.actualCallee}")
-                        updateResultForFunction(callee, curData)
+                        updateResultForFunction(callee, argumentsResult)
                         if (first) {
-                            set = getResultAfterCall(callee, BitSet())
+                            callResult = getResultAfterCall(callee, BitSet())
                             first = false
                         } else {
                             val otherSet = getResultAfterCall(callee, BitSet())
-                            set.and(otherSet)
+                            callResult.and(otherSet)
                         }
                     }
-                    return curData.copy().also { it.or(set) }
+                    return argumentsResult.copy().also { it.or(callResult) }
                 }
             }, initializedFilesBeforeCall)
 
