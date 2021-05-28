@@ -106,16 +106,16 @@ internal object FileInitializersOptimization {
                 +""
             }
 
-            var fileId = 1
+            var fileId = invalidFileId
             val fileIds = mutableMapOf<IrFile, Int>()
             for (node in callGraph.directEdges.values) {
                 val callerFile = node.symbol.irFile
                 if (callerFile != null && fileIds[callerFile] == null)
-                    fileIds[callerFile] = fileId++
+                    fileIds[callerFile] = ++fileId
                 for (callSite in node.callSites) {
                     val calleeFile = callSite.actualCallee.irFile
                     if (calleeFile != null && fileIds[calleeFile] == null)
-                        fileIds[calleeFile] = fileId++
+                        fileIds[calleeFile] = ++fileId
                 }
             }
 
