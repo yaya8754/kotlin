@@ -604,7 +604,7 @@ internal class TestProcessor (val context: Context) {
             context.irFactory.buildFun {
                 startOffset = SYNTHETIC_OFFSET
                 endOffset = SYNTHETIC_OFFSET
-                origin = DECLARATION_ORIGIN_MODULE_INITIALIZER
+                origin = DECLARATION_ORIGIN_MODULE_THREAD_LOCAL_INITIALIZER
                 name = Name.identifier("\$createTestSuites")
                 visibility = DescriptorVisibilities.PRIVATE
                 returnType = context.irBuiltIns.unitType

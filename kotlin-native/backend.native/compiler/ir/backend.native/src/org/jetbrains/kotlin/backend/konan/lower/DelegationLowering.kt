@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.backend.konan.descriptors.synthesizedName
 import org.jetbrains.kotlin.backend.konan.ir.buildSimpleAnnotation
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.ir.builders.*
-import org.jetbrains.kotlin.ir.builders.declarations.buildFun
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.impl.IrFieldImpl
 import org.jetbrains.kotlin.ir.expressions.IrExpression
@@ -29,6 +28,8 @@ import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.name.Name
+
+internal object DECLARATION_ORIGIN_KPROPERTIES_FOR_DELEGATION : IrDeclarationOriginImpl("KPROPERTIES_FOR_DELEGATION")
 
 internal class PropertyDelegationLowering(val context: Context) : FileLoweringPass {
     private var tempIndex = 0
@@ -163,22 +164,9 @@ internal class PropertyDelegationLowering(val context: Context) : FileLoweringPa
         if (kProperties.isNotEmpty()) {
             val initializers = kProperties.values.sortedBy { it.second }.map { it.first }
             // TODO: replace with static initialization.
-            val kPropertiesInitializer = context.irFactory.buildFun {
-                startOffset = SYNTHETIC_OFFSET
-                endOffset = SYNTHETIC_OFFSET
-                origin = DECLARATION_ORIGIN_MODULE_INITIALIZER
-                name = Name.identifier("\$kProperties_init")
-                visibility = DescriptorVisibilities.PRIVATE
-                returnType = context.irBuiltIns.unitType
-            }.apply {
-                parent = irFile
-                body = context.createIrBuilder(symbol, startOffset, endOffset).irBlockBody {
-                    +irSetField(null, kPropertiesField,
-                            this@PropertyDelegationLowering.context.createArrayOfExpression(startOffset, endOffset, kPropertyImplType, initializers))
-                }
-            }
+            kPropertiesField.initializer = IrExpressionBodyImpl(SYNTHETIC_OFFSET, SYNTHETIC_OFFSET,
+                    context.createArrayOfExpression(SYNTHETIC_OFFSET, SYNTHETIC_OFFSET, kPropertyImplType, initializers))
             irFile.declarations.add(0, kPropertiesField)
-            irFile.declarations.add(1, kPropertiesInitializer)
         }
     }
 
@@ -304,7 +292,4 @@ internal class PropertyDelegationLowering(val context: Context) : FileLoweringPa
         }
         return type.classifier == expectedClass
     }
-
-    private object DECLARATION_ORIGIN_KPROPERTIES_FOR_DELEGATION :
-            IrDeclarationOriginImpl("KPROPERTIES_FOR_DELEGATION")
 }

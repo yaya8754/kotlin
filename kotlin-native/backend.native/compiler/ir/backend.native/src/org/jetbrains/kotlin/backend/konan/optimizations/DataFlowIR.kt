@@ -15,7 +15,8 @@ import org.jetbrains.kotlin.backend.konan.llvm.computeSymbolName
 import org.jetbrains.kotlin.backend.konan.llvm.isExported
 import org.jetbrains.kotlin.backend.konan.llvm.localHash
 import org.jetbrains.kotlin.backend.konan.lower.DECLARATION_ORIGIN_BRIDGE_METHOD
-import org.jetbrains.kotlin.backend.konan.lower.DECLARATION_ORIGIN_MODULE_INITIALIZER
+import org.jetbrains.kotlin.backend.konan.lower.DECLARATION_ORIGIN_MODULE_GLOBAL_INITIALIZER
+import org.jetbrains.kotlin.backend.konan.lower.DECLARATION_ORIGIN_MODULE_THREAD_LOCAL_INITIALIZER
 import org.jetbrains.kotlin.backend.konan.lower.bridgeTarget
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
@@ -581,7 +582,8 @@ internal object DataFlowIR {
                     || it.hasAnnotation(RuntimeNames.objCMethodImp)) {
                 attributes = attributes or FunctionAttributes.EXPLICITLY_EXPORTED
             }
-            if (it.origin == DECLARATION_ORIGIN_MODULE_INITIALIZER)
+            if (it.origin == DECLARATION_ORIGIN_MODULE_GLOBAL_INITIALIZER
+                    || it.origin == DECLARATION_ORIGIN_MODULE_THREAD_LOCAL_INITIALIZER)
                 attributes = attributes or FunctionAttributes.IS_GLOBAL_INITIALIZER
             val symbol = when {
                 it.isExternal || it.isBuiltInOperator -> {

@@ -6,23 +6,25 @@
 package org.jetbrains.kotlin.backend.konan.lower
 
 import org.jetbrains.kotlin.backend.common.FileLoweringPass
+import org.jetbrains.kotlin.backend.common.lower.createIrBuilder
 import org.jetbrains.kotlin.backend.konan.Context
 import org.jetbrains.kotlin.backend.konan.llvm.FieldStorageKind
 import org.jetbrains.kotlin.backend.konan.llvm.storageKind
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.ir.IrStatement
+import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.builders.declarations.buildFun
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
 import org.jetbrains.kotlin.ir.expressions.IrConst
-import org.jetbrains.kotlin.ir.expressions.IrStatementOriginImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
 import org.jetbrains.kotlin.ir.util.SYNTHETIC_OFFSET
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.name.Name
 
-internal object DECLARATION_ORIGIN_MODULE_INITIALIZER : IrDeclarationOriginImpl("MODULE_INITIALIZER")
+internal object DECLARATION_ORIGIN_MODULE_GLOBAL_INITIALIZER : IrDeclarationOriginImpl("MODULE_GLOBAL_INITIALIZER")
+internal object DECLARATION_ORIGIN_MODULE_THREAD_LOCAL_INITIALIZER : IrDeclarationOriginImpl("MODULE_THREAD_LOCAL_INITIALIZER")
 internal object DECLARATION_ORIGIN_FILE_GLOBAL_INITIALIZER : IrDeclarationOriginImpl("FILE_GLOBAL_INITIALIZER")
 internal object DECLARATION_ORIGIN_FILE_THREAD_LOCAL_INITIALIZER : IrDeclarationOriginImpl("FILE_THREAD_LOCAL_INITIALIZER")
 internal object DECLARATION_ORIGIN_FILE_STANDALONE_THREAD_LOCAL_INITIALIZER : IrDeclarationOriginImpl("FILE_STANDALONE_THREAD_LOCAL_INITIALIZER")
@@ -32,15 +34,25 @@ internal class FileInitializersLowering(val context: Context) : FileLoweringPass
     override fun lower(irFile: IrFile) {
         var requireGlobalInitializer = false
         var requireThreadLocalInitializer = false
+        var kPropertiesField: IrField? = null
         for (declaration in irFile.declarations) {
             val irField = (declaration as? IrField) ?: (declaration as? IrProperty)?.backingField
             if (irField == null || !irField.hasNonConstInitializer) continue
-            if (irField.storageKind == FieldStorageKind.THREAD_LOCAL)
-                requireThreadLocalInitializer = true
-            else requireGlobalInitializer = true
+            when {
+                irField.origin == DECLARATION_ORIGIN_KPROPERTIES_FOR_DELEGATION -> {
+                    require(kPropertiesField == null) { "Expected at most one kProperties field" }
+                    kPropertiesField = irField
+                }
+                irField.storageKind == FieldStorageKind.THREAD_LOCAL -> requireThreadLocalInitializer = true
+                else -> requireGlobalInitializer = true
+            }
         }
         // TODO: think about pure initializers.
-        if (!requireGlobalInitializer && !requireThreadLocalInitializer) return
+        if (!requireGlobalInitializer && !requireThreadLocalInitializer) {
+            kPropertiesField?.let { transformKPropertiesInitializerToModuleInitializer(irFile, it) }
+            return
+        }
+        kPropertiesField?.let { requireGlobalInitializer = true }
 
         val globalInitFunction =
                 if (requireGlobalInitializer)
@@ -80,6 +92,25 @@ internal class FileInitializersLowering(val context: Context) : FileLoweringPass
                 return declaration
             }
         })
+    }
+
+    private fun transformKPropertiesInitializerToModuleInitializer(irFile: IrFile, irField: IrField) {
+        val initializer = context.irFactory.buildFun {
+            startOffset = irField.startOffset
+            endOffset = irField.endOffset
+            origin = DECLARATION_ORIGIN_MODULE_GLOBAL_INITIALIZER
+            name = Name.identifier("\$kProperties_init")
+            visibility = DescriptorVisibilities.PRIVATE
+            returnType = context.irBuiltIns.unitType
+        }.apply {
+            parent = irFile
+            body = context.createIrBuilder(symbol, startOffset, endOffset).irBlockBody {
+                +irSetField(null, irField, irField.initializer!!.expression)
+                +irReturn(irGetObject(context.irBuiltIns.unitClass))
+            }
+        }
+        irField.initializer = null
+        irFile.declarations.add(initializer)
     }
 
     private fun buildInitFileFunction(irFile: IrFile, name: String, origin: IrDeclarationOrigin) = context.irFactory.buildFun {

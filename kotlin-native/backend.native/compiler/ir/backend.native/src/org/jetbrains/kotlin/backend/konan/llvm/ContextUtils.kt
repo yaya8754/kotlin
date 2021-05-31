@@ -233,14 +233,16 @@ internal class InitializersGenerationState {
     val fileThreadLocalInitStates = mutableMapOf<IrFile, AddressAccess>()
 
     val topLevelFields = mutableListOf<IrField>()
-    val moduleInitializers = mutableListOf<IrFunction>()
+    val moduleThreadLocalInitializers = mutableListOf<IrFunction>()
+    val moduleGlobalInitializers = mutableListOf<IrFunction>()
     var globalInitFunction: IrFunction? = null
     var globalInitState: LLVMValueRef? = null
     var threadLocalInitFunction: IrFunction? = null
     var threadLocalInitState: AddressAccess? = null
 
     fun reset() {
-        moduleInitializers.clear()
+        moduleThreadLocalInitializers.clear()
+        moduleGlobalInitializers.clear()
         topLevelFields.clear()
         globalInitFunction = null
         globalInitState = null
@@ -248,8 +250,8 @@ internal class InitializersGenerationState {
         threadLocalInitState = null
     }
 
-    fun isEmpty() = topLevelFields.isEmpty() && moduleInitializers.isEmpty()
-            && globalInitState == null && threadLocalInitState == null
+    fun isEmpty() = topLevelFields.isEmpty() && globalInitState == null && threadLocalInitState == null
+            && moduleGlobalInitializers.isEmpty() && moduleThreadLocalInitializers.isEmpty()
 }
 
 internal class Llvm(val context: Context, val llvmModule: LLVMModuleRef) {
