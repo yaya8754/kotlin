@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.ir.expressions.IrBlockBody
 import org.jetbrains.kotlin.ir.expressions.IrConst
 import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
 import org.jetbrains.kotlin.ir.util.SYNTHETIC_OFFSET
+import org.jetbrains.kotlin.ir.util.setDeclarationsParent
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.name.Name
@@ -103,10 +104,10 @@ internal class FileInitializersLowering(val context: Context) : FileLoweringPass
             visibility = DescriptorVisibilities.PRIVATE
             returnType = context.irBuiltIns.unitType
         }.apply {
+            val function = this
             parent = irFile
             body = context.createIrBuilder(symbol, startOffset, endOffset).irBlockBody {
-                +irSetField(null, irField, irField.initializer!!.expression)
-                +irReturn(irGetObject(context.irBuiltIns.unitClass))
+                +irSetField(null, irField, irField.initializer!!.expression.also { it.setDeclarationsParent(function) })
             }
         }
         irField.initializer = null

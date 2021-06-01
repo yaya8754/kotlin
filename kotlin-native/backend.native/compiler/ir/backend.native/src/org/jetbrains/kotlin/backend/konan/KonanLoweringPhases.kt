@@ -361,6 +361,12 @@ internal val autoboxPhase = makeKonanFileLoweringPhase(
         prerequisite = setOf(bridgesPhase, coroutinesPhase)
 )
 
+internal val expressionBodyTransformPhase = makeKonanFileLoweringPhase(
+        ::ExpressionBodyTransformer,
+        name = "ExpressionBodyTransformer",
+        description = "Replace IrExpressionBody with IrBlockBody"
+)
+
 internal val returnsInsertionPhase = makeKonanFileLoweringPhase(
         ::ReturnsInsertionLowering,
         name = "ReturnsInsertion",
@@ -372,7 +378,7 @@ internal val fileInitializersPhase = makeKonanFileLoweringPhase(
         ::FileInitializersLowering,
         name = "FileInitializers",
         description = "Add calls to file initializers",
-        prerequisite = setOf(returnsInsertionPhase)
+        prerequisite = setOf(expressionBodyTransformPhase)
 )
 
 internal val ifNullExpressionsFusionPhase = makeKonanFileLoweringPhase(

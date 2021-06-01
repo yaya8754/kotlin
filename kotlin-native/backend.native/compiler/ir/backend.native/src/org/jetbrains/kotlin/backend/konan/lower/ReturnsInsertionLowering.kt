@@ -20,6 +20,28 @@ import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
 
+internal class ExpressionBodyTransformer(val context: Context) : FileLoweringPass {
+    override fun lower(irFile: IrFile) {
+        irFile.acceptVoid(object : IrElementVisitorVoid {
+            override fun visitElement(element: IrElement) {
+                element.acceptChildrenVoid(this)
+            }
+
+            override fun visitFunction(declaration: IrFunction) {
+                declaration.acceptChildrenVoid(this)
+
+                context.createIrBuilder(declaration.symbol, declaration.endOffset, declaration.endOffset).run {
+                    val body = declaration.body
+                    if (body is IrExpressionBody)
+                        declaration.body = IrBlockBodyImpl(body.startOffset, body.endOffset) {
+                            statements += irReturn(body.expression)
+                        }
+                }
+            }
+        })
+    }
+}
+
 internal class ReturnsInsertionLowering(val context: Context) : FileLoweringPass {
     private val symbols = context.ir.symbols
 
@@ -33,16 +55,9 @@ internal class ReturnsInsertionLowering(val context: Context) : FileLoweringPass
                 declaration.acceptChildrenVoid(this)
 
                 context.createIrBuilder(declaration.symbol, declaration.endOffset, declaration.endOffset).run {
-                    when (val body = declaration.body) {
-                        is IrExpressionBody -> {
-                            declaration.body = IrBlockBodyImpl(body.startOffset, body.endOffset) {
-                                statements += irReturn(body.expression)
-                            }
-                        }
-                        is IrBlockBody -> {
-                            if (declaration is IrConstructor || declaration.returnType == context.irBuiltIns.unitType)
-                                body.statements += irReturn(irGetObject(symbols.unit))
-                        }
+                    declaration.body?.let { body ->
+                        if (declaration is IrConstructor || declaration.returnType == context.irBuiltIns.unitType)
+                            (body as IrBlockBody).statements += irReturn(irGetObject(symbols.unit))
                     }
                 }
             }

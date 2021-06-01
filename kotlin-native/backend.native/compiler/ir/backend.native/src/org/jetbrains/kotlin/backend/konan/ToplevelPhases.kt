@@ -226,10 +226,11 @@ internal val allLoweringsPhase = NamedCompilerPhase(
                             kotlinNothingValueExceptionPhase,
                             coroutinesPhase,
                             typeOperatorPhase,
+                            expressionBodyTransformPhase,
+                            fileInitializersPhase,
                             bridgesPhase,
                             autoboxPhase,
                             returnsInsertionPhase,
-                            fileInitializersPhase,
                         )
                 ),
         actions = setOf(defaultDumper, ::moduleValidationCallback)

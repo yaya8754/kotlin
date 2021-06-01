@@ -218,6 +218,13 @@ internal object FileInitializersOptimization {
             CollectCallSites
         }
 
+        private fun IrFunction.callsFileInitializer(): Boolean {
+            val origin = (body?.statements?.get(0) as? IrCall)?.symbol?.owner?.origin
+            return origin == DECLARATION_ORIGIN_FILE_GLOBAL_INITIALIZER
+                    || origin == DECLARATION_ORIGIN_FILE_THREAD_LOCAL_INITIALIZER
+                    || origin == DECLARATION_ORIGIN_FILE_STANDALONE_THREAD_LOCAL_INITIALIZER
+        }
+
         private fun intraproceduralAnalysis(
                 node: CallGraphNode,
                 initializedFiles: InitializedFiles,
@@ -229,8 +236,8 @@ internal object FileInitializersOptimization {
             val body = caller.body ?: return
             val initializedFilesBeforeCall = BitSet()
             initializedFiles.beforeCall[caller]?.let { initializedFilesBeforeCall.or(it) }
-            // Since the function has been called, the file is bound to be initialized.
-            initializedFilesBeforeCall.set(initializedFiles.fileIds[caller.file]!!)
+            if (caller.callsFileInitializer())
+                initializedFilesBeforeCall.set(initializedFiles.fileIds[caller.file]!!)
 
             val producerInvocations = mutableMapOf<IrExpression, IrCall>()
             val jobInvocations = mutableMapOf<IrCall, IrCall>()
@@ -367,6 +374,7 @@ internal object FileInitializersOptimization {
                 private fun getResultAfterCall(function: IrFunction, set: BitSet): BitSet {
                     val result = initializedFiles.afterCall[function]
                     if (result == null) {
+                        if (!function.callsFileInitializer()) return set
                         val file = function.fileOrNull ?: return set
                         val fileId = initializedFiles.fileIds[file]!!
                         return if (set.get(fileId))
