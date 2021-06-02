@@ -1387,6 +1387,16 @@ standaloneTest("initializers_return2") {
     goldValue = "42\n"
 }
 
+standaloneTest("initializers_workers1") {
+    source = "codegen/initializers/workers1.kt"
+    goldValue = "42\n3\n"
+}
+
+standaloneTest("initializers_workers2") {
+    source = "codegen/initializers/workers2.kt"
+    goldValue = "42\n42\n"
+}
+
 linkTest("initializers_linkTest1") {
     goldValue = "1200\n"
     source = "codegen/initializers/linkTest1_main.kt"
