@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.backend.konan.optimizations
 
 import org.jetbrains.kotlin.backend.common.atMostOne
 import org.jetbrains.kotlin.backend.common.lower.createIrBuilder
+import org.jetbrains.kotlin.backend.common.lower.irBlock
 import org.jetbrains.kotlin.backend.konan.Context
 import org.jetbrains.kotlin.backend.konan.DirectedGraphCondensationBuilder
 import org.jetbrains.kotlin.backend.konan.DirectedGraphMultiNode
@@ -18,14 +19,14 @@ import org.jetbrains.kotlin.backend.konan.logMultiple
 import org.jetbrains.kotlin.backend.konan.lower.DECLARATION_ORIGIN_FILE_GLOBAL_INITIALIZER
 import org.jetbrains.kotlin.backend.konan.lower.DECLARATION_ORIGIN_FILE_STANDALONE_THREAD_LOCAL_INITIALIZER
 import org.jetbrains.kotlin.backend.konan.lower.DECLARATION_ORIGIN_FILE_THREAD_LOCAL_INITIALIZER
+import org.jetbrains.kotlin.backend.konan.lower.irCallFileInitializer
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
+import org.jetbrains.kotlin.ir.builders.IrBuilderWithScope
 import org.jetbrains.kotlin.ir.builders.irBlock
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.lazy.IrLazyClass
 import org.jetbrains.kotlin.ir.expressions.*
-import org.jetbrains.kotlin.ir.expressions.impl.IrBlockImpl
-import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
 import org.jetbrains.kotlin.ir.symbols.IrReturnTargetSymbol
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.*
@@ -488,9 +489,13 @@ internal object FileInitializersOptimization {
         var numberOfFunctions = 0
         var numberOfRemovedInitializerCalls = 0
 
-        context.irModule!!.transformChildrenVoid(object : IrElementTransformerVoid() {
-            override fun visitFunctionAccess(expression: IrFunctionAccessExpression): IrExpression {
-                expression.transformChildrenVoid(this)
+        context.irModule!!.transformChildren(object : IrElementTransformer<IrBuilderWithScope?> {
+            override fun visitDeclaration(declaration: IrDeclarationBase, data: IrBuilderWithScope?): IrStatement {
+                return super.visitDeclaration(declaration, context.createIrBuilder(declaration.symbol, SYNTHETIC_OFFSET, SYNTHETIC_OFFSET))
+            }
+
+            override fun visitFunctionAccess(expression: IrFunctionAccessExpression, data: IrBuilderWithScope?): IrExpression {
+                expression.transformChildren(this, data)
                 if (expression !in analysisResult.callSitesRequiringInitializerCall) return expression
                 val callee = expression.actualCallee
                 if (callee in analysisResult.functionsRequiringInitializerCall) return expression
@@ -503,23 +508,12 @@ internal object FileInitializersOptimization {
                 }
                 if (initializerCalls.isEmpty()) return expression
 
-                return IrBlockImpl(
-                        expression.startOffset, expression.endOffset,
-                        expression.type
-                ).apply {
-                    statements.addAll(initializerCalls.map {
-                        val initializer = (it as IrCall).symbol
-                        IrCallImpl(
-                                SYNTHETIC_OFFSET, SYNTHETIC_OFFSET,
-                                context.irBuiltIns.unitType,
-                                initializer,
-                                typeArgumentsCount = 0, valueArgumentsCount = 0
-                        )
-                    })
-                    statements.add(expression)
+                return data!!.irBlock(expression) {
+                    initializerCalls.forEach { +irCallFileInitializer((it as IrCall).symbol) }
+                    +expression
                 }
             }
-        })
+        }, data = null)
 
         context.irModule!!.transformChildrenVoid(object : IrElementTransformerVoid() {
             override fun visitFunction(declaration: IrFunction): IrStatement {

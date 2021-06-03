@@ -25,33 +25,6 @@
 #include "Runtime.h"
 #include "Worker.h"
 
-static constexpr int FILE_NOT_INITIALIZED = 0;
-static constexpr int FILE_BEING_INITIALIZED = 1;
-static constexpr int FILE_INITIALIZED = 2;
-
-void CallInitPossiblyLock(int volatile* state, void (*init)()) {
-    int localState = *state;
-    if (localState == FILE_INITIALIZED) return;
-    int threadId = konan::currentThreadId();
-    if ((localState & 3) == FILE_BEING_INITIALIZED) {
-        if ((localState >> 2) != threadId) {
-            do {
-                localState = *state;
-            } while (localState != FILE_INITIALIZED);
-        }
-        return;
-    }
-    if (compareAndSwap(state, FILE_NOT_INITIALIZED, FILE_BEING_INITIALIZED | (threadId << 2)) == FILE_NOT_INITIALIZED) {
-        // actual initialization
-        init();
-        *state = FILE_INITIALIZED;
-    } else {
-        do {
-            localState = *state;
-        } while (localState != FILE_INITIALIZED);
-    }
-}
-
 typedef void (*Initializer)(int initialize, MemoryState* memory);
 struct InitNode {
   Initializer init;
@@ -106,6 +79,8 @@ constexpr RuntimeState* kInvalidRuntime = nullptr;
 
 THREAD_LOCAL_VARIABLE RuntimeState* runtimeState = kInvalidRuntime;
 
+volatile int mainThreadId = 0;
+
 inline bool isValidRuntime() {
   return ::runtimeState != kInvalidRuntime;
 }
@@ -158,6 +133,7 @@ RuntimeState* initRuntime() {
   CommitTLSStorage(result->memoryState);
   // Keep global variables in state as well.
   if (firstRuntime) {
+    mainThreadId = konan::currentThreadId();
     konan::consoleInit();
 #if KONAN_OBJC_INTEROP
     Kotlin_ObjCExport_initialize();
@@ -395,6 +371,38 @@ void Kotlin_Debugging_setForceCheckedShutdown(KBoolean value) {
             break;
     }
     g_forceCheckedShutdown = value;
+}
+
+static constexpr int FILE_NOT_INITIALIZED = 0;
+static constexpr int FILE_BEING_INITIALIZED = 1;
+static constexpr int FILE_INITIALIZED = 2;
+
+void CallInitGlobalPossiblyLock(int volatile* state, void (*init)(bool)) {
+    int localState = *state;
+    if (localState == FILE_INITIALIZED) return;
+    int threadId = konan::currentThreadId();
+    if ((localState & 3) == FILE_BEING_INITIALIZED) {
+        if ((localState >> 2) != threadId) {
+            do {
+                localState = *state;
+            } while (localState != FILE_INITIALIZED);
+        }
+        return;
+    }
+    if (compareAndSwap(state, FILE_NOT_INITIALIZED, FILE_BEING_INITIALIZED | (threadId << 2)) == FILE_NOT_INITIALIZED) {
+        // actual initialization
+        init(threadId == mainThreadId);
+        *state = FILE_INITIALIZED;
+    } else {
+        do {
+            localState = *state;
+        } while (localState != FILE_INITIALIZED);
+    }
+}
+
+void CallInitThreadLocal(int* state, void (*init)(bool)) {
+    *state = FILE_INITIALIZED;
+    init(konan::currentThreadId() == mainThreadId);
 }
 
 }  // extern "C"

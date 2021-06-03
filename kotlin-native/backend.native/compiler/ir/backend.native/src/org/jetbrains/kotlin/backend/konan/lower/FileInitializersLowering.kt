@@ -13,11 +13,12 @@ import org.jetbrains.kotlin.backend.konan.llvm.storageKind
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.builders.*
+import org.jetbrains.kotlin.ir.builders.declarations.addValueParameter
 import org.jetbrains.kotlin.ir.builders.declarations.buildFun
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
 import org.jetbrains.kotlin.ir.expressions.IrConst
-import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
+import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.util.SYNTHETIC_OFFSET
 import org.jetbrains.kotlin.ir.util.setDeclarationsParent
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
@@ -29,6 +30,9 @@ internal object DECLARATION_ORIGIN_MODULE_THREAD_LOCAL_INITIALIZER : IrDeclarati
 internal object DECLARATION_ORIGIN_FILE_GLOBAL_INITIALIZER : IrDeclarationOriginImpl("FILE_GLOBAL_INITIALIZER")
 internal object DECLARATION_ORIGIN_FILE_THREAD_LOCAL_INITIALIZER : IrDeclarationOriginImpl("FILE_THREAD_LOCAL_INITIALIZER")
 internal object DECLARATION_ORIGIN_FILE_STANDALONE_THREAD_LOCAL_INITIALIZER : IrDeclarationOriginImpl("FILE_STANDALONE_THREAD_LOCAL_INITIALIZER")
+
+internal fun IrBuilderWithScope.irCallFileInitializer(initializer: IrFunctionSymbol) =
+        irCall(initializer).apply { putValueArgument(0, irFalse()) }
 
 // TODO: ExplicitlyExported for IR proto are not longer needed.
 internal class FileInitializersLowering(val context: Context) : FileLoweringPass {
@@ -44,8 +48,8 @@ internal class FileInitializersLowering(val context: Context) : FileLoweringPass
                     require(kPropertiesField == null) { "Expected at most one kProperties field" }
                     kPropertiesField = irField
                 }
-                irField.storageKind == FieldStorageKind.THREAD_LOCAL -> requireThreadLocalInitializer = true
-                else -> requireGlobalInitializer = true
+                irField.storageKind == FieldStorageKind.SHARED_FROZEN -> requireGlobalInitializer = true
+                else -> requireThreadLocalInitializer = true // Either marked with thread local or only main thread visible.
             }
         }
         // TODO: think about pure initializers.
@@ -72,23 +76,12 @@ internal class FileInitializersLowering(val context: Context) : FileLoweringPass
             override fun visitFunction(declaration: IrFunction): IrStatement {
                 declaration.transformChildrenVoid(this)
                 val body = declaration.body ?: return declaration
-                // The order of calling initializers: first global, then thread-local.
-                // It is ok for a thread local top level property to reference a global, but not vice versa.
-                threadLocalInitFunction?.let {
-                    (body as IrBlockBody).statements.add(0, IrCallImpl(
-                            SYNTHETIC_OFFSET, SYNTHETIC_OFFSET,
-                            context.irBuiltIns.unitType,
-                            it.symbol,
-                            typeArgumentsCount = 0, valueArgumentsCount = 0
-                    ))
-                }
-                globalInitFunction?.let {
-                    (body as IrBlockBody).statements.add(0, IrCallImpl(
-                            SYNTHETIC_OFFSET, SYNTHETIC_OFFSET,
-                            context.irBuiltIns.unitType,
-                            it.symbol,
-                            typeArgumentsCount = 0, valueArgumentsCount = 0
-                    ))
+                val statements = (body as IrBlockBody).statements
+                context.createIrBuilder(declaration.symbol, SYNTHETIC_OFFSET, SYNTHETIC_OFFSET).run {
+                    // The order of calling initializers: first global, then thread-local.
+                    // It is ok for a thread local top level property to reference a global, but not vice versa.
+                    threadLocalInitFunction?.let { statements.add(0, irCallFileInitializer(it.symbol)) }
+                    globalInitFunction?.let { statements.add(0, irCallFileInitializer(it.symbol)) }
                 }
                 return declaration
             }
@@ -123,6 +116,7 @@ internal class FileInitializersLowering(val context: Context) : FileLoweringPass
         returnType = context.irBuiltIns.unitType
     }.apply {
         parent = irFile
+        addValueParameter("isMainThread", context.irBuiltIns.booleanType)
         irFile.declarations.add(0, this)
     }
 
