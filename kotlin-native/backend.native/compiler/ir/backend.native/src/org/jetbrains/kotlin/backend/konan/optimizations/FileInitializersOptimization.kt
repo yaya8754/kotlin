@@ -195,13 +195,13 @@ internal object FileInitializersOptimization {
                 nodes.forEach { intraproceduralAnalysis(callGraph.directEdges[it]!!, initializedFiles, analysisGoal) }
                 // The process is convergent since files can only be removed from the sets.
                 var sum = nodes.sumBy {
-                    (initializedFiles.beforeCall[it.irFunction!!]?.cardinality() ?: 0) + (initializedFiles.afterCall[it.irFunction]?.cardinality() ?: 0)
+                    (initializedFiles.beforeCall[it.irFunction!!]?.cardinality() ?: 0) + (initializedFiles.afterCall[it.irFunction!!]?.cardinality() ?: 0)
                 }
                 do {
                     val prevSum = sum
                     nodes.forEach { intraproceduralAnalysis(callGraph.directEdges[it]!!, initializedFiles, analysisGoal) }
                     sum = nodes.sumBy {
-                        (initializedFiles.beforeCall[it.irFunction!!]?.cardinality() ?: 0) + (initializedFiles.afterCall[it.irFunction]?.cardinality() ?: 0)
+                        (initializedFiles.beforeCall[it.irFunction!!]?.cardinality() ?: 0) + (initializedFiles.afterCall[it.irFunction!!]?.cardinality() ?: 0)
                     }
                 } while (sum != prevSum)
             }
@@ -232,12 +232,22 @@ internal object FileInitializersOptimization {
                 callSitesRequiringInitializerCall: MutableSet<IrFunctionAccessExpression> = dummySet,
                 callSitesNotRequiringInitializerCall: MutableSet<IrFunctionAccessExpression> = dummySet
         ) {
-            val caller = node.symbol.irFunction ?: return
-            val body = caller.body ?: return
+            val irDeclaration = node.symbol.irDeclaration ?: return
+            val body = if (node.symbol.isTopLevelFieldInitializer)
+                (irDeclaration as IrField).initializer?.expression
+            else {
+                val function = irDeclaration as IrFunction
+                val builder = context.createIrBuilder(function.symbol)
+                function.body?.let { body -> builder.irBlock { (body as IrBlockBody).statements.forEach { +it } } }
+            }
+            if (body == null) return
+
             val initializedFilesBeforeCall = BitSet()
-            initializedFiles.beforeCall[caller]?.let { initializedFilesBeforeCall.or(it) }
-            if (caller.callsFileInitializer())
-                initializedFilesBeforeCall.set(initializedFiles.fileIds[caller.file]!!)
+            if (!node.symbol.isTopLevelFieldInitializer) {
+                initializedFiles.beforeCall[irDeclaration as IrFunction]?.let { initializedFilesBeforeCall.or(it) }
+                if (irDeclaration.callsFileInitializer())
+                    initializedFilesBeforeCall.set(initializedFiles.fileIds[irDeclaration.file]!!)
+            }
 
             val producerInvocations = mutableMapOf<IrExpression, IrCall>()
             val jobInvocations = mutableMapOf<IrCall, IrCall>()
@@ -255,11 +265,9 @@ internal object FileInitializersOptimization {
             val returnTargetsInitializedFiles = mutableMapOf<IrReturnTargetSymbol, BitSet>()
             val initializedFilesAtLoopsBreaks = mutableMapOf<IrLoop, BitSet>()
             val initializedFilesAtLoopsContinues = mutableMapOf<IrLoop, BitSet>()
-            val builder = context.createIrBuilder(caller.symbol)
-            val block = builder.irBlock { body.statements.forEach { +it } }
             // Each visitXXX function gets as [data] parameter the set of initialized files before evaluating
             // current element and returns the set of initialized files after evaluating this element.
-            block.accept(object : IrElementVisitor<BitSet, BitSet> {
+            body.accept(object : IrElementVisitor<BitSet, BitSet> {
                 private fun intersectInitializedFiles(previous: BitSet?, current: BitSet) =
                         previous?.copy()?.also { it.and(current) } ?: current
 
@@ -467,8 +475,10 @@ internal object FileInitializersOptimization {
                 }
             }, initializedFilesBeforeCall)
 
-            if (analysisGoal == AnalysisGoal.ComputeInitializedAfterCall)
-                initializedFiles.afterCall[caller] = returnTargetsInitializedFiles[caller.symbol] ?: initializedFilesBeforeCall
+            if (analysisGoal == AnalysisGoal.ComputeInitializedAfterCall) {
+                if (!node.symbol.isTopLevelFieldInitializer)
+                    initializedFiles.afterCall[irDeclaration as IrFunction] = returnTargetsInitializedFiles[irDeclaration.symbol] ?: initializedFilesBeforeCall
+            }
         }
     }
 
