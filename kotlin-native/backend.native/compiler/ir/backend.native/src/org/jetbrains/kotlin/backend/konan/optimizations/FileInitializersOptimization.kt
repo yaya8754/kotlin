@@ -158,41 +158,37 @@ internal object FileInitializersOptimization {
                         callSitesNotRequiringGlobalInitializerCall, callSitesNotRequiringThreadLocalInitializerCall)
             }
 
-            val functionsWhoseGlobalInitializerCallCanBeExtractedToCallSites =
+            fun collectFunctionsRequiringInitializerCall(
+                    initializedFiles: Map<IrFunction, BitSet>,
+                    functionsWhoseInitializerCallCanBeExtractedToCallSites: Set<IrFunction>
+            ): Set<IrFunction> {
+                val result = mutableSetOf<IrFunction>()
+                initializedFiles.forEach { (function, functionInitializedFiles) ->
+                    val irFile = function.fileOrNull
+                    val backingField = (function as? IrSimpleFunction)?.correspondingPropertySymbol?.owner?.backingField
+                    val isDefaultAccessor = backingField != null && function.origin == IrDeclarationOrigin.DEFAULT_PROPERTY_ACCESSOR
+                    if (irFile == null ||
+                            (!functionInitializedFiles.get(fileIds[irFile]!!)
+                                    && function !in functionsWhoseInitializerCallCanBeExtractedToCallSites
+                                    // Extract calls to file initializers off of default accessors to simplify their inlining.
+                                    && (!isDefaultAccessor || function in rootSet))
+                    ) {
+                        result += function
+                    }
+                }
+                return result
+            }
+
+            val functionsRequiringGlobalInitializerCall = collectFunctionsRequiringInitializerCall(
+                    initializedFiles.beforeCallGlobal,
                     callSitesRequiringGlobalInitializerCall.map { it.actualCallee }
                             .toMutableSet().intersect(callSitesNotRequiringGlobalInitializerCall.map { it.actualCallee })
-            val functionsWhoseThreadLocalInitializerCallCanBeExtractedToCallSites =
+            )
+            val functionsRequiringThreadLocalInitializerCall = collectFunctionsRequiringInitializerCall(
+                    initializedFiles.beforeCallThreadLocal,
                     callSitesRequiringThreadLocalInitializerCall.map { it.actualCallee }
                             .toMutableSet().intersect(callSitesNotRequiringThreadLocalInitializerCall.map { it.actualCallee })
-
-            val functionsRequiringGlobalInitializerCall = mutableSetOf<IrFunction>()
-            val functionsRequiringThreadLocalInitializerCall = mutableSetOf<IrFunction>()
-            initializedFiles.beforeCallGlobal.forEach { (function, functionInitializedFiles) ->
-                val irFile = function.fileOrNull
-                val backingField = (function as? IrSimpleFunction)?.correspondingPropertySymbol?.owner?.backingField
-                val isDefaultAccessor = backingField != null && function.origin == IrDeclarationOrigin.DEFAULT_PROPERTY_ACCESSOR
-                if (irFile == null ||
-                        (!functionInitializedFiles.get(fileIds[irFile]!!)
-                                && function !in functionsWhoseGlobalInitializerCallCanBeExtractedToCallSites
-                                // Extract calls to file initializers off of default accessors to simplify their inlining.
-                                && (!isDefaultAccessor || function in rootSet))
-                ) {
-                    functionsRequiringGlobalInitializerCall += function
-                }
-            }
-            initializedFiles.beforeCallThreadLocal.forEach { (function, functionInitializedFiles) ->
-                val irFile = function.fileOrNull
-                val backingField = (function as? IrSimpleFunction)?.correspondingPropertySymbol?.owner?.backingField
-                val isDefaultAccessor = backingField != null && function.origin == IrDeclarationOrigin.DEFAULT_PROPERTY_ACCESSOR
-                if (irFile == null ||
-                        (!functionInitializedFiles.get(fileIds[irFile]!!)
-                                && function !in functionsWhoseThreadLocalInitializerCallCanBeExtractedToCallSites
-                                // Extract calls to file initializers off of default accessors to simplify their inlining.
-                                && (!isDefaultAccessor || function in rootSet))
-                ) {
-                    functionsRequiringThreadLocalInitializerCall += function
-                }
-            }
+            )
 
             return AnalysisResult(functionsRequiringGlobalInitializerCall, functionsRequiringThreadLocalInitializerCall,
                     callSitesRequiringGlobalInitializerCall, callSitesRequiringThreadLocalInitializerCall)
@@ -408,16 +404,15 @@ internal object FileInitializersOptimization {
                     return data
                 }
 
+                private fun BitSet.withSetBit(bit: Int): BitSet =
+                        if (this.get(bit)) this else copy().also { it.set(bit) }
+
                 private fun getResultAfterCall(function: IrFunction, set: BitSet): BitSet {
                     val result = initializedFiles.afterCall[function]
                     if (result == null) {
                         if (!function.callsFileInitializer()) return set
                         val file = function.fileOrNull ?: return set
-                        val fileId = initializedFiles.fileIds[file]!!
-                        return if (set.get(fileId))
-                            set
-                        else
-                            set.copy().also { it.set(fileId) }
+                        return set.withSetBit(initializedFiles.fileIds[file]!!)
                     }
                     return result.copy().also { it.or(set) }
                 }
@@ -499,7 +494,7 @@ internal object FileInitializersOptimization {
 
                 override fun visitCall(expression: IrCall, data: BitSet): BitSet {
                     if (expression.symbol.owner.isFileInitializer)
-                        return data.copy().also { it.set(initializedFiles.fileIds[irDeclaration.file]!!) } // TODO: check if already set.
+                        return data.withSetBit(initializedFiles.fileIds[irDeclaration.file]!!)
                     if (expression.symbol == executeImplSymbol)
                         return processExecuteImpl(expression, data)
                     if (expression.symbol == getContinuationSymbol)
