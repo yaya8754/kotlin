@@ -16,10 +16,10 @@ import org.jetbrains.kotlin.backend.konan.ir.isOverridable
 import org.jetbrains.kotlin.backend.konan.ir.isUnconditional
 import org.jetbrains.kotlin.backend.konan.ir.isVirtualCall
 import org.jetbrains.kotlin.backend.konan.logMultiple
+import org.jetbrains.kotlin.backend.konan.lower.*
 import org.jetbrains.kotlin.backend.konan.lower.DECLARATION_ORIGIN_FILE_GLOBAL_INITIALIZER
 import org.jetbrains.kotlin.backend.konan.lower.DECLARATION_ORIGIN_FILE_STANDALONE_THREAD_LOCAL_INITIALIZER
 import org.jetbrains.kotlin.backend.konan.lower.DECLARATION_ORIGIN_FILE_THREAD_LOCAL_INITIALIZER
-import org.jetbrains.kotlin.backend.konan.lower.irCallFileInitializer
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.builders.IrBuilderWithScope
@@ -54,12 +54,15 @@ import java.util.*
  */
 
 internal object FileInitializersOptimization {
-    private class AnalysisResult(val functionsRequiringInitializerCall: Set<IrFunction>,
-                                 val callSitesRequiringInitializerCall: Set<IrFunctionAccessExpression>)
+    private class AnalysisResult(val functionsRequiringGlobalInitializerCall: Set<IrFunction>,
+                                 val functionsRequiringThreadLocalInitializerCall: Set<IrFunction>,
+                                 val callSitesRequiringGlobalInitializerCall: Set<IrFunctionAccessExpression>,
+                                 val callSitesRequiringThreadLocalInitializerCall: Set<IrFunctionAccessExpression>)
 
     private class InitializedFiles(val fileIds: Map<IrFile, Int>) {
-        val beforeCall = mutableMapOf<IrFunction, BitSet>()
         val afterCall = mutableMapOf<IrFunction, BitSet>()
+        val beforeCallGlobal = mutableMapOf<IrFunction, BitSet>()
+        val beforeCallThreadLocal = mutableMapOf<IrFunction, BitSet>()
     }
 
     private val invalidFileId = 0
@@ -133,8 +136,10 @@ internal object FileInitializersOptimization {
             // none of the files has been initialized yet.
             for (node in callGraph.directEdges.values) {
                 val function = node.symbol.irFunction ?: continue
-                if (function in rootSet)
-                    initializedFiles.beforeCall[function] = BitSet()
+                if (function in rootSet) {
+                    initializedFiles.beforeCallGlobal[function] = BitSet()
+                    initializedFiles.beforeCallThreadLocal[function] = BitSet()
+                }
             }
 
             for (multiNode in condensation.topologicalOrder)
@@ -142,34 +147,55 @@ internal object FileInitializersOptimization {
 
             context.log { "THIRD PHASE: collect call sites" }
 
-            val callSitesRequiringInitializerCall = mutableSetOf<IrFunctionAccessExpression>()
-            val callSitesNotRequiringInitializerCall = mutableSetOf<IrFunctionAccessExpression>()
+            val callSitesRequiringGlobalInitializerCall = mutableSetOf<IrFunctionAccessExpression>()
+            val callSitesRequiringThreadLocalInitializerCall = mutableSetOf<IrFunctionAccessExpression>()
+            val callSitesNotRequiringGlobalInitializerCall = mutableSetOf<IrFunctionAccessExpression>()
+            val callSitesNotRequiringThreadLocalInitializerCall = mutableSetOf<IrFunctionAccessExpression>()
 
             for (node in callGraph.directEdges.values) {
                 intraproceduralAnalysis(node, initializedFiles, AnalysisGoal.CollectCallSites,
-                        callSitesRequiringInitializerCall, callSitesNotRequiringInitializerCall)
+                        callSitesRequiringGlobalInitializerCall, callSitesRequiringThreadLocalInitializerCall,
+                        callSitesNotRequiringGlobalInitializerCall, callSitesNotRequiringThreadLocalInitializerCall)
             }
 
-            val functionsWhoseInitializerCallCanBeExtractedToCallSites =
-                    callSitesRequiringInitializerCall.map { it.actualCallee }
-                            .toMutableSet().intersect(callSitesNotRequiringInitializerCall.map { it.actualCallee })
+            val functionsWhoseGlobalInitializerCallCanBeExtractedToCallSites =
+                    callSitesRequiringGlobalInitializerCall.map { it.actualCallee }
+                            .toMutableSet().intersect(callSitesNotRequiringGlobalInitializerCall.map { it.actualCallee })
+            val functionsWhoseThreadLocalInitializerCallCanBeExtractedToCallSites =
+                    callSitesRequiringThreadLocalInitializerCall.map { it.actualCallee }
+                            .toMutableSet().intersect(callSitesNotRequiringThreadLocalInitializerCall.map { it.actualCallee })
 
-            val functionsRequiringInitializerCall = mutableSetOf<IrFunction>()
-            initializedFiles.beforeCall.forEach { (function, functionInitializedFiles) ->
+            val functionsRequiringGlobalInitializerCall = mutableSetOf<IrFunction>()
+            val functionsRequiringThreadLocalInitializerCall = mutableSetOf<IrFunction>()
+            initializedFiles.beforeCallGlobal.forEach { (function, functionInitializedFiles) ->
                 val irFile = function.fileOrNull
                 val backingField = (function as? IrSimpleFunction)?.correspondingPropertySymbol?.owner?.backingField
                 val isDefaultAccessor = backingField != null && function.origin == IrDeclarationOrigin.DEFAULT_PROPERTY_ACCESSOR
                 if (irFile == null ||
                         (!functionInitializedFiles.get(fileIds[irFile]!!)
-                                && function !in functionsWhoseInitializerCallCanBeExtractedToCallSites
+                                && function !in functionsWhoseGlobalInitializerCallCanBeExtractedToCallSites
                                 // Extract calls to file initializers off of default accessors to simplify their inlining.
                                 && (!isDefaultAccessor || function in rootSet))
                 ) {
-                    functionsRequiringInitializerCall += function
+                    functionsRequiringGlobalInitializerCall += function
+                }
+            }
+            initializedFiles.beforeCallThreadLocal.forEach { (function, functionInitializedFiles) ->
+                val irFile = function.fileOrNull
+                val backingField = (function as? IrSimpleFunction)?.correspondingPropertySymbol?.owner?.backingField
+                val isDefaultAccessor = backingField != null && function.origin == IrDeclarationOrigin.DEFAULT_PROPERTY_ACCESSOR
+                if (irFile == null ||
+                        (!functionInitializedFiles.get(fileIds[irFile]!!)
+                                && function !in functionsWhoseThreadLocalInitializerCallCanBeExtractedToCallSites
+                                // Extract calls to file initializers off of default accessors to simplify their inlining.
+                                && (!isDefaultAccessor || function in rootSet))
+                ) {
+                    functionsRequiringThreadLocalInitializerCall += function
                 }
             }
 
-            return AnalysisResult(functionsRequiringInitializerCall, callSitesRequiringInitializerCall)
+            return AnalysisResult(functionsRequiringGlobalInitializerCall, functionsRequiringThreadLocalInitializerCall,
+                    callSitesRequiringGlobalInitializerCall, callSitesRequiringThreadLocalInitializerCall)
         }
 
         private fun analyze(multiNode: DirectedGraphMultiNode<DataFlowIR.FunctionSymbol.Declared>,
@@ -196,13 +222,17 @@ internal object FileInitializersOptimization {
                 nodes.forEach { intraproceduralAnalysis(callGraph.directEdges[it]!!, initializedFiles, analysisGoal) }
                 // The process is convergent since files can only be removed from the sets.
                 var sum = nodes.sumBy {
-                    (initializedFiles.beforeCall[it.irFunction!!]?.cardinality() ?: 0) + (initializedFiles.afterCall[it.irFunction!!]?.cardinality() ?: 0)
+                    (initializedFiles.beforeCallGlobal[it.irFunction!!]?.cardinality() ?: 0) +
+                            (initializedFiles.beforeCallThreadLocal[it.irFunction!!]?.cardinality() ?: 0) +
+                            (initializedFiles.afterCall[it.irFunction!!]?.cardinality() ?: 0)
                 }
                 do {
                     val prevSum = sum
                     nodes.forEach { intraproceduralAnalysis(callGraph.directEdges[it]!!, initializedFiles, analysisGoal) }
                     sum = nodes.sumBy {
-                        (initializedFiles.beforeCall[it.irFunction!!]?.cardinality() ?: 0) + (initializedFiles.afterCall[it.irFunction!!]?.cardinality() ?: 0)
+                        (initializedFiles.beforeCallGlobal[it.irFunction!!]?.cardinality() ?: 0) +
+                                (initializedFiles.beforeCallThreadLocal[it.irFunction!!]?.cardinality() ?: 0) +
+                                (initializedFiles.afterCall[it.irFunction!!]?.cardinality() ?: 0)
                     }
                 } while (sum != prevSum)
             }
@@ -219,19 +249,17 @@ internal object FileInitializersOptimization {
             CollectCallSites
         }
 
-        private fun IrFunction.callsFileInitializer(): Boolean {
-            val origin = (body?.statements?.get(0) as? IrCall)?.symbol?.owner?.origin
-            return origin == DECLARATION_ORIGIN_FILE_GLOBAL_INITIALIZER
-                    || origin == DECLARATION_ORIGIN_FILE_THREAD_LOCAL_INITIALIZER
-                    || origin == DECLARATION_ORIGIN_FILE_STANDALONE_THREAD_LOCAL_INITIALIZER
-        }
+        private fun IrFunction.callsFileInitializer() =
+                (body?.statements?.get(0) as? IrCall)?.symbol?.owner?.isFileInitializer == true
 
         private fun intraproceduralAnalysis(
                 node: CallGraphNode,
                 initializedFiles: InitializedFiles,
                 analysisGoal: AnalysisGoal,
-                callSitesRequiringInitializerCall: MutableSet<IrFunctionAccessExpression> = dummySet,
-                callSitesNotRequiringInitializerCall: MutableSet<IrFunctionAccessExpression> = dummySet
+                callSitesRequiringGlobalInitializerCall: MutableSet<IrFunctionAccessExpression> = dummySet,
+                callSitesRequiringThreadLocalInitializerCall: MutableSet<IrFunctionAccessExpression> = dummySet,
+                callSitesNotRequiringGlobalInitializerCall: MutableSet<IrFunctionAccessExpression> = dummySet,
+                callSitesNotRequiringThreadLocalInitializerCall: MutableSet<IrFunctionAccessExpression> = dummySet
         ) {
             val irDeclaration = node.symbol.irDeclaration ?: return
             val body = if (node.symbol.isTopLevelFieldInitializer)
@@ -243,11 +271,11 @@ internal object FileInitializersOptimization {
             }
             if (body == null) return
 
-            val initializedFilesBeforeCall = BitSet()
+            val filesWithInitializedGlobals = BitSet()
+            val filesWithInitializedThreadLocals = BitSet()
             if (!node.symbol.isTopLevelFieldInitializer) {
-                initializedFiles.beforeCall[irDeclaration as IrFunction]?.let { initializedFilesBeforeCall.or(it) }
-                if (irDeclaration.callsFileInitializer())
-                    initializedFilesBeforeCall.set(initializedFiles.fileIds[irDeclaration.file]!!)
+                initializedFiles.beforeCallGlobal[irDeclaration as IrFunction]?.let { filesWithInitializedGlobals.or(it) }
+                initializedFiles.beforeCallThreadLocal[irDeclaration]?.let { filesWithInitializedThreadLocals.or(it) }
             }
 
             val producerInvocations = mutableMapOf<IrExpression, IrCall>()
@@ -268,7 +296,7 @@ internal object FileInitializersOptimization {
             val initializedFilesAtLoopsContinues = mutableMapOf<IrLoop, BitSet>()
             // Each visitXXX function gets as [data] parameter the set of initialized files before evaluating
             // current element and returns the set of initialized files after evaluating this element.
-            body.accept(object : IrElementVisitor<BitSet, BitSet> {
+            val callerResult = body.accept(object : IrElementVisitor<BitSet, BitSet> {
                 private fun intersectInitializedFiles(previous: BitSet?, current: BitSet) =
                         previous?.copy()?.also { it.and(current) } ?: current
 
@@ -394,9 +422,16 @@ internal object FileInitializersOptimization {
                     return result.copy().also { it.or(set) }
                 }
 
+                private fun updateResultForFunction(function: IrFunction, globalSet: BitSet, threadLocalSet: BitSet) {
+                    if (analysisGoal != AnalysisGoal.ComputeInitializedBeforeCall) return
+                    intersectInitializedFiles(initializedFiles.beforeCallGlobal, function, globalSet)
+                    intersectInitializedFiles(initializedFiles.beforeCallThreadLocal, function, threadLocalSet)
+                }
+
                 private fun updateResultForFunction(function: IrFunction, set: BitSet) {
                     if (analysisGoal != AnalysisGoal.ComputeInitializedBeforeCall) return
-                    intersectInitializedFiles(initializedFiles.beforeCall, function, set)
+                    intersectInitializedFiles(initializedFiles.beforeCallGlobal, function, set.copy().also { it.or(filesWithInitializedGlobals) })
+                    intersectInitializedFiles(initializedFiles.beforeCallThreadLocal, function, set.copy().also { it.or(filesWithInitializedThreadLocals) })
                 }
 
                 override fun visitGetObjectValue(expression: IrGetObjectValue, data: BitSet): BitSet {
@@ -422,13 +457,21 @@ internal object FileInitializersOptimization {
                     if (analysisGoal == AnalysisGoal.CollectCallSites && file != null
                             // Only extract initializer calls from non-virtual functions.
                             && !actualCallee.isOverridable
-                            // The initializer won't be optimized away from the function.
-                            && !initializedFiles.beforeCall[actualCallee]!!.get(fileId)
                     ) {
-                        if (argumentsResult.get(fileId))
-                            callSitesNotRequiringInitializerCall += expression
-                        else
-                            callSitesRequiringInitializerCall += expression
+                        // The initializer won't be optimized away from the function.
+                        if (!initializedFiles.beforeCallGlobal[actualCallee]!!.get(fileId)) {
+                            if (argumentsResult.get(fileId) || filesWithInitializedGlobals.get(fileId))
+                                callSitesNotRequiringGlobalInitializerCall += expression
+                            else
+                                callSitesRequiringGlobalInitializerCall += expression
+                        }
+                        // The initializer won't be optimized away from the function.
+                        if (!initializedFiles.beforeCallThreadLocal[actualCallee]!!.get(fileId)) {
+                            if (argumentsResult.get(fileId) || filesWithInitializedThreadLocals.get(fileId))
+                                callSitesNotRequiringThreadLocalInitializerCall += expression
+                            else
+                                callSitesRequiringThreadLocalInitializerCall += expression
+                        }
                     }
                     return getResultAfterCall(actualCallee, argumentsResult)
                 }
@@ -440,8 +483,13 @@ internal object FileInitializersOptimization {
                     // Albeit this call site is a fictitious one, it is always a virtual one, which aren't optimized for now.
                     curData = visitCall(producerInvocation, curData)
                     val jobInvocation = jobInvocations[producerInvocation]!!
-                    if (analysisGoal != AnalysisGoal.CollectCallSites) // A fictitious call site - skip it explicitly since it's always non-virtual.
-                        visitCall(jobInvocation, curData)
+                    if (analysisGoal != AnalysisGoal.CollectCallSites) {
+                        require(!jobInvocation.isVirtualCall) { "Expected a static call but was: ${jobInvocation.render()}" }
+                        updateResultForFunction(jobInvocation.actualCallee,
+                                curData.copy().also { it.or(filesWithInitializedGlobals) }, // Globals (= shared) visible to other threads as well.
+                                BitSet() // A new thread is about to be created - no thread locals initialized yet.
+                        )
+                    }
                     // Actual job could be invoked on another thread, thus can't take the result from that call.
                     return curData
                 }
@@ -450,6 +498,8 @@ internal object FileInitializersOptimization {
                         processCall(expression, expression.actualCallee, data)
 
                 override fun visitCall(expression: IrCall, data: BitSet): BitSet {
+                    if (expression.symbol.owner.isFileInitializer)
+                        return data.copy().also { it.set(initializedFiles.fileIds[irDeclaration.file]!!) } // TODO: check if already set.
                     if (expression.symbol == executeImplSymbol)
                         return processExecuteImpl(expression, data)
                     if (expression.symbol == getContinuationSymbol)
@@ -474,11 +524,11 @@ internal object FileInitializersOptimization {
                     }
                     return argumentsResult.copy().also { it.or(callResult) }
                 }
-            }, initializedFilesBeforeCall)
+            }, BitSet())
 
             if (analysisGoal == AnalysisGoal.ComputeInitializedAfterCall) {
                 if (!node.symbol.isTopLevelFieldInitializer)
-                    initializedFiles.afterCall[irDeclaration as IrFunction] = returnTargetsInitializedFiles[irDeclaration.symbol] ?: initializedFilesBeforeCall
+                    initializedFiles.afterCall[irDeclaration as IrFunction] = returnTargetsInitializedFiles[irDeclaration.symbol] ?: callerResult
             }
         }
     }
@@ -486,8 +536,14 @@ internal object FileInitializersOptimization {
     fun removeRedundantCalls(context: Context, callGraph: CallGraph, rootSet: Set<IrFunction>) {
         val analysisResult = InterproceduralAnalysis(context, callGraph, rootSet).analyze()
 
-        var numberOfFunctions = 0
-        var numberOfRemovedInitializerCalls = 0
+        var numberOfFunctionsWithGlobalInitializerCall = 0
+        var numberOfFunctionsWithThreadLocalInitializerCall = 0
+        var numberOfRemovedGlobalInitializerCalls = 0
+        var numberOfRemovedThreadLocalInitializerCalls = 0
+        var numberOfCallSitesToFunctionsWithGlobalInitializerCall = 0
+        var numberOfCallSitesToFunctionsWithThreadLocalInitializerCall = 0
+        var numberOfCallSitesWithExtractedGlobalInitializerCall = 0
+        var numberOfCallSitesWithExtractedThreadLocalInitializerCall = 0
 
         context.irModule!!.transformChildren(object : IrElementTransformer<IrBuilderWithScope?> {
             override fun visitDeclaration(declaration: IrDeclarationBase, data: IrBuilderWithScope?): IrStatement {
@@ -496,16 +552,32 @@ internal object FileInitializersOptimization {
 
             override fun visitFunctionAccess(expression: IrFunctionAccessExpression, data: IrBuilderWithScope?): IrExpression {
                 expression.transformChildren(this, data)
-                if (expression !in analysisResult.callSitesRequiringInitializerCall) return expression
+
                 val callee = expression.actualCallee
-                if (callee in analysisResult.functionsRequiringInitializerCall) return expression
                 val body = callee.body ?: return expression
-                val initializerCalls = (body as IrBlockBody).statements.filter {
-                    val calleeOrigin = (it as? IrCall)?.symbol?.owner?.origin
-                    calleeOrigin == DECLARATION_ORIGIN_FILE_GLOBAL_INITIALIZER
-                            || calleeOrigin == DECLARATION_ORIGIN_FILE_THREAD_LOCAL_INITIALIZER
-                            || calleeOrigin == DECLARATION_ORIGIN_FILE_STANDALONE_THREAD_LOCAL_INITIALIZER
-                }
+                val initializerCalls = (body as IrBlockBody).statements
+                        .take(2) // The very first statements by construction.
+                        .filter {
+                            val calleeOrigin = (it as? IrCall)?.symbol?.owner?.origin
+                            val isNotOptimizedAwayGlobalInitializerCall = calleeOrigin == DECLARATION_ORIGIN_FILE_GLOBAL_INITIALIZER
+                                    && callee !in analysisResult.functionsRequiringGlobalInitializerCall
+                            val isNotOptimizedAwayThreadLocalInitializerCall = (calleeOrigin == DECLARATION_ORIGIN_FILE_THREAD_LOCAL_INITIALIZER
+                                    || calleeOrigin == DECLARATION_ORIGIN_FILE_STANDALONE_THREAD_LOCAL_INITIALIZER)
+                                    && callee !in analysisResult.functionsRequiringThreadLocalInitializerCall
+                            if (isNotOptimizedAwayGlobalInitializerCall)
+                                ++numberOfCallSitesToFunctionsWithGlobalInitializerCall
+                            if (isNotOptimizedAwayThreadLocalInitializerCall)
+                                ++numberOfCallSitesToFunctionsWithThreadLocalInitializerCall
+                            val canExtractGlobalInitializerCall = isNotOptimizedAwayGlobalInitializerCall
+                                    && expression in analysisResult.callSitesRequiringGlobalInitializerCall
+                            val canExtractThreadLocalInitializerCall = isNotOptimizedAwayThreadLocalInitializerCall
+                                    && expression in analysisResult.callSitesRequiringThreadLocalInitializerCall
+                            if (canExtractGlobalInitializerCall)
+                                ++numberOfCallSitesWithExtractedGlobalInitializerCall
+                            if (canExtractThreadLocalInitializerCall)
+                                ++numberOfCallSitesWithExtractedThreadLocalInitializerCall
+                            canExtractGlobalInitializerCall || canExtractThreadLocalInitializerCall
+                        }
                 if (initializerCalls.isEmpty()) return expression
 
                 return data!!.irBlock(expression) {
@@ -517,20 +589,42 @@ internal object FileInitializersOptimization {
 
         context.irModule!!.transformChildrenVoid(object : IrElementTransformerVoid() {
             override fun visitFunction(declaration: IrFunction): IrStatement {
-                ++numberOfFunctions
-                if (declaration in analysisResult.functionsRequiringInitializerCall) return declaration
-                ++numberOfRemovedInitializerCalls
                 val body = declaration.body ?: return declaration
-                (body as IrBlockBody).statements.removeAll {
-                    val calleeOrigin = (it as? IrCall)?.symbol?.owner?.origin
-                    calleeOrigin == DECLARATION_ORIGIN_FILE_GLOBAL_INITIALIZER
-                            || calleeOrigin == DECLARATION_ORIGIN_FILE_THREAD_LOCAL_INITIALIZER
-                            || calleeOrigin == DECLARATION_ORIGIN_FILE_STANDALONE_THREAD_LOCAL_INITIALIZER
+                val statements = (body as IrBlockBody).statements
+                val globalInitializerCallIndex = statements
+                        .take(2) // The very first statements by construction.
+                        .indexOfFirst {
+                            val calleeOrigin = (it as? IrCall)?.symbol?.owner?.origin
+                            calleeOrigin == DECLARATION_ORIGIN_FILE_GLOBAL_INITIALIZER
+                        }
+                if (globalInitializerCallIndex >= 0) {
+                    ++numberOfFunctionsWithGlobalInitializerCall
+                    if (declaration !in analysisResult.functionsRequiringGlobalInitializerCall) {
+                        ++numberOfRemovedGlobalInitializerCalls
+                        statements.removeAt(globalInitializerCallIndex)
+                    }
+                }
+                val threadLocalInitializerCallIndex = statements
+                        .take(2)
+                        .indexOfFirst {
+                            val calleeOrigin = (it as? IrCall)?.symbol?.owner?.origin
+                            calleeOrigin == DECLARATION_ORIGIN_FILE_THREAD_LOCAL_INITIALIZER
+                                    || calleeOrigin == DECLARATION_ORIGIN_FILE_STANDALONE_THREAD_LOCAL_INITIALIZER
+                        }
+                if (threadLocalInitializerCallIndex >= 0) {
+                    ++numberOfFunctionsWithThreadLocalInitializerCall
+                    if (declaration !in analysisResult.functionsRequiringThreadLocalInitializerCall) {
+                        ++numberOfRemovedThreadLocalInitializerCalls
+                        statements.removeAt(threadLocalInitializerCallIndex)
+                    }
                 }
                 return declaration
             }
         })
 
-        context.log { "Removed ${numberOfRemovedInitializerCalls * 100.0 / numberOfFunctions}% initializers" }
+        context.log { "Removed ${numberOfRemovedGlobalInitializerCalls * 100.0 / numberOfFunctionsWithGlobalInitializerCall}% global initializers" }
+        context.log { "Removed ${numberOfRemovedThreadLocalInitializerCalls * 100.0 / numberOfFunctionsWithThreadLocalInitializerCall}% thread local initializers" }
+        context.log { "Removed ${(numberOfCallSitesWithExtractedGlobalInitializerCall) * 100.0 / numberOfCallSitesToFunctionsWithGlobalInitializerCall}% global initializer calls" }
+        context.log { "Removed ${(numberOfCallSitesWithExtractedThreadLocalInitializerCall) * 100.0 / numberOfCallSitesToFunctionsWithThreadLocalInitializerCall}% thread local initializer calls" }
     }
 }
