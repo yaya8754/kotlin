@@ -308,7 +308,8 @@ object KSerializerDescriptorResolver {
             type,
             emptyList(), // no need type parameters?
             containingClassDescriptor.thisAsReceiverParameter,
-            extensionReceiverParameter
+            extensionReceiverParameter,
+            emptyList()
         )
 
         val propertyGetter: PropertyGetterDescriptorImpl? = if (createGetter) {
