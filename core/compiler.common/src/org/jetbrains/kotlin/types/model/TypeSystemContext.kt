@@ -33,6 +33,8 @@ interface CapturedTypeConstructorMarker : TypeConstructorMarker
 
 interface IntersectionTypeConstructorMarker : TypeConstructorMarker
 
+interface UnionTypeConstructorMarker : TypeConstructorMarker
+
 interface TypeSubstitutorMarker
 
 interface AnnotationMarker

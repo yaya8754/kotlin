@@ -201,6 +201,7 @@ val ConeKotlinType.canBeNull: Boolean
             is ConeDefinitelyNotNullType -> false
             is ConeTypeParameterType -> this.lookupTag.typeParameterSymbol.fir.bounds.all { it.coneType.canBeNull }
             is ConeIntersectionType -> intersectedTypes.all { it.canBeNull }
+            is ConeUnionType -> nestedTypes.any { it.canBeNull }
             else -> isNullable
         }
     }

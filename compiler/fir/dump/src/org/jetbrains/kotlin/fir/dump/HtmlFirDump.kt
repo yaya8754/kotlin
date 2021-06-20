@@ -695,6 +695,12 @@ class HtmlFirDump internal constructor(private var linkResolver: FirLinkResolver
         +")"
     }
 
+    private fun FlowContent.generate(unionType: ConeUnionType) {
+        +"("
+        generateList(unionType.nestedTypes.toList(), " | ") { generate(it) }
+        +")"
+    }
+
     private fun FlowContent.generate(type: ConeClassLikeType) {
         resolved {
             when (val symbol = type.lookupTag.toSymbol(session)) {
@@ -856,6 +862,7 @@ class HtmlFirDump internal constructor(private var linkResolver: FirLinkResolver
                 +"!!"
             }
             is ConeIntersectionType -> resolved { generate(type) }
+            is ConeUnionType -> resolved { generate(type) }
             is ConeIntegerLiteralType -> inlineUnsupported(type)
             is ConeLookupTagBasedType,
             is ConeStubType -> {}

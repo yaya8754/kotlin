@@ -183,6 +183,10 @@ interface ConeInferenceContext : TypeSystemInferenceExtensionContext, ConeTypeCo
             return this.intersectedTypes.any { it.containsInternal(predicate, visited) }
         }
 
+        if (this is ConeUnionType) {
+            return this.nestedTypes.any { it.containsInternal(predicate, visited) }
+        }
+
         repeat(argumentsCount()) { index ->
             val argument = getArgument(index)
             if (!argument.isStarProjection() && argument.getType().containsInternal(predicate, visited)) return true

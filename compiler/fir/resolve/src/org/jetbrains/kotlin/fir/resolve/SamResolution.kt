@@ -64,7 +64,7 @@ class FirSamResolverImpl(
             is ConeClassErrorType, is ConeStubType -> null
             // TODO: support those types as well
             is ConeTypeParameterType, is ConeTypeVariableType,
-            is ConeCapturedType, is ConeDefinitelyNotNullType, is ConeIntersectionType,
+            is ConeCapturedType, is ConeDefinitelyNotNullType, is ConeIntersectionType, is ConeUnionType,
             is ConeIntegerLiteralType,
             -> null
             // TODO: Thing of getting rid of this branch since ConeLookupTagBasedType should be a sealed class

@@ -159,6 +159,10 @@ class Fir2IrTypeConverter(
                 // TODO: add intersectionTypeApproximation
                 intersectedTypes.first().toIrType(typeContext)
             }
+            is ConeUnionType -> {
+                // TODO: create IrUnionType
+                createErrorType()
+            }
             is ConeStubType -> createErrorType()
             is ConeIntegerLiteralType -> createErrorType()
         }
@@ -214,6 +218,9 @@ class Fir2IrTypeConverter(
             }
             is ConeIntersectionType -> {
                 intersectedTypes.any { it.isRecursive(visited) }
+            }
+            is ConeUnionType -> {
+                nestedTypes.any { it.isRecursive(visited) }
             }
             else -> false
         }

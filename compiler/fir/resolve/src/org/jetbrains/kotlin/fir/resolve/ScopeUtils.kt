@@ -90,6 +90,7 @@ private fun ConeKotlinType.scope(useSiteSession: FirSession, scopeSession: Scope
             },
             type
         )
+        is ConeUnionType -> commonSuperType.scope(useSiteSession, scopeSession, requiredPhase)
         is ConeDefinitelyNotNullType -> original.scope(useSiteSession, scopeSession, requiredPhase)
         is ConeIntegerLiteralType -> error("ILT should not be in receiver position")
         else -> null

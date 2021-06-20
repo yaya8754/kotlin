@@ -46,6 +46,13 @@ fun ConeKotlinType.render(): String {
                 postfix = ")"
             )
         }
+        is ConeUnionType -> {
+            nestedTypes.joinToString(
+                separator = " | ",
+                prefix = "${renderAttributes()}it(",
+                postfix = ")"
+            )
+        }
         is ConeStubType -> "${renderAttributes()}Stub: $variable"
         is ConeIntegerLiteralType -> "${renderAttributes()}ILT: $value"
     } + nullabilitySuffix

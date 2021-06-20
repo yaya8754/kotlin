@@ -143,6 +143,7 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
             is ConeCapturedType -> constructor
             is ConeTypeVariableType -> lookupTag
             is ConeIntersectionType -> this
+            is ConeUnionType -> this
             is ConeStubType -> variable.typeConstructor
             is ConeDefinitelyNotNullType -> original.typeConstructor()
             is ConeIntegerLiteralType -> this
@@ -221,6 +222,7 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
             is ConeCapturedTypeConstructor,
             is ErrorTypeConstructor,
             is ConeTypeVariableTypeConstructor,
+            is ConeUnionType,
             is ConeIntersectionType -> 0
             is ConeClassLikeLookupTag -> {
                 when (val symbol = toSymbol(session)) {
@@ -269,6 +271,7 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
             }
             is ConeCapturedTypeConstructor -> supertypes!!
             is ConeIntersectionType -> intersectedTypes
+            is ConeUnionType -> listOf(commonSuperType)
             is ConeIntegerLiteralType -> supertypes
             else -> unknownConstructorError()
         }
@@ -327,6 +330,7 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
     override fun TypeConstructorMarker.isDenotable(): Boolean {
         return when (this) {
             is ConeClassLikeLookupTag,
+            is ConeUnionType,
             is ConeTypeParameterLookupTag -> true
 
             is ConeCapturedTypeConstructor,
@@ -383,6 +387,7 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
         if (this is ConeCapturedType) return true
         if (this is ConeTypeVariableType) return false
         if (this is ConeIntersectionType) return false
+        if (this is ConeUnionType) return false
         if (this is ConeIntegerLiteralType) return true
         if (this is ConeStubType) return true
         if (this is ConeDefinitelyNotNullType) return true

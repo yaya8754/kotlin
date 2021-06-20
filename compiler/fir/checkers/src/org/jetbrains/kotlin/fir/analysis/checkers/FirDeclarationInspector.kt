@@ -97,6 +97,14 @@ interface FirDeclarationPresenter {
                 append(it.value)
                 append(it.nullability.suffix)
             }
+            is ConeUnionType -> {
+                it.nestedTypes.forEachIndexed { i, nestedType ->
+                    appendRepresentation(nestedType)
+                    if (i != it.nestedTypes.size - 1) {
+                        append(" | ")
+                    }
+                }
+            }
             is ConeFlexibleType,
             is ConeIntersectionType,
             is ConeStubType -> {

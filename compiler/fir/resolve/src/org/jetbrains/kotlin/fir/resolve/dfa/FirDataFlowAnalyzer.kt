@@ -145,6 +145,7 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
                                 is ConeTypeParameterType -> true
                                 is ConeFlexibleType -> lowerBound.isAcceptableForSmartcast() && upperBound.isAcceptableForSmartcast()
                                 is ConeIntersectionType -> intersectedTypes.all { it.isAcceptableForSmartcast() }
+                                is ConeUnionType -> nestedTypes.all { it.isAcceptableForSmartcast() }
                                 is ConeDefinitelyNotNullType -> original.isAcceptableForSmartcast()
                                 else -> false
                             }

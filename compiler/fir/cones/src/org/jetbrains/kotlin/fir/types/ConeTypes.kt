@@ -282,6 +282,47 @@ fun ConeIntersectionType.mapTypes(func: (ConeKotlinType) -> ConeKotlinType): Con
     return ConeIntersectionType(intersectedTypes.map(func))
 }
 
+class ConeUnionType(
+    val nestedTypes: List<ConeKotlinType>,
+    val commonSuperType: ConeKotlinType
+) : ConeSimpleKotlinType(), UnionTypeConstructorMarker {
+
+    override val typeArguments: Array<out ConeTypeProjection> = nestedTypes.flatMap { it.typeArguments.asList() }.toTypedArray()
+
+    override val nullability: ConeNullability = when {
+        nestedTypes.any { it.nullability == ConeNullability.NULLABLE } -> ConeNullability.NULLABLE
+        nestedTypes.any { it.nullability == ConeNullability.UNKNOWN } -> ConeNullability.UNKNOWN
+        else -> ConeNullability.NOT_NULL
+    }
+
+    override val attributes: ConeAttributes = nestedTypes.foldMap(
+        { it.attributes },
+        { a, b -> a.union(b) }
+    )
+
+    private var hashCode = 0
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as ConeUnionType
+
+        if (nestedTypes != other.nestedTypes) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        if (hashCode != 0) return hashCode
+        return nestedTypes.hashCode().also { hashCode = it }
+    }
+}
+
+fun ConeUnionType.mapTypes(func: (ConeKotlinType) -> ConeKotlinType): ConeUnionType {
+    return ConeUnionType(nestedTypes.map(func), commonSuperType)
+}
+
 class ConeStubType(val variable: ConeTypeVariable, override val nullability: ConeNullability) : StubTypeMarker, ConeSimpleKotlinType() {
     override val typeArguments: Array<out ConeTypeProjection>
         get() = emptyArray()

@@ -65,6 +65,7 @@ abstract class AbstractConeSubstitutor(private val typeContext: ConeTypeContext)
             is ConeCapturedType -> return null
             is ConeDefinitelyNotNullType -> this.substituteOriginal()
             is ConeIntersectionType -> this.substituteIntersectedTypes()
+            is ConeUnionType -> this.substituteUnionTypes()
             is ConeStubType -> return null
             is ConeIntegerLiteralType -> return null
         }
@@ -81,6 +82,19 @@ abstract class AbstractConeSubstitutor(private val typeContext: ConeTypeContext)
         }
         if (!somethingIsSubstituted) return null
         return ConeIntersectionType(substitutedTypes)
+    }
+
+    private fun ConeUnionType.substituteUnionTypes(): ConeUnionType? {
+        val substitutedTypes = ArrayList<ConeKotlinType>(nestedTypes.size)
+        var somethingIsSubstituted = false
+        for (type in nestedTypes) {
+            val substitutedType = substituteOrNull(type)?.also {
+                somethingIsSubstituted = true
+            } ?: type
+            substitutedTypes += substitutedType
+        }
+        if (!somethingIsSubstituted) return null
+        return ConeUnionType(substitutedTypes, commonSuperType)
     }
 
     private fun ConeDefinitelyNotNullType.substituteOriginal(): ConeKotlinType? {

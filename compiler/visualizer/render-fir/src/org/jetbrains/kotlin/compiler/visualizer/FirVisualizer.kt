@@ -429,6 +429,10 @@ class FirVisualizer(private val firFile: FirFile) : BaseRenderer() {
                     intersectedTypes.map { it.render().replace("/", ".").replace("kotlin.", "") }.sorted()
                         .joinToString(separator = " & ", prefix = "{", postfix = "}")
                 }
+                is ConeUnionType -> {
+                    nestedTypes.map { it.render().replace("/", ".").replace("kotlin.", "") }.sorted()
+                        .joinToString(separator = " | ", prefix = "{", postfix = "}")
+                }
                 else -> this.render()
             }
         }

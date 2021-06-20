@@ -6,13 +6,14 @@
 package org.jetbrains.kotlin.fir.types
 
 object ConeKotlinTypeComparator : Comparator<ConeKotlinType> {
-    private val ConeKotlinType.priority : Int
+    private val ConeKotlinType.priority: Int
         get() = when (this) {
-            is ConeKotlinErrorType -> 8
-            is ConeLookupTagBasedType -> 7
-            is ConeFlexibleType -> 6
-            is ConeCapturedType -> 5
-            is ConeDefinitelyNotNullType -> 4
+            is ConeKotlinErrorType -> 9
+            is ConeLookupTagBasedType -> 8
+            is ConeFlexibleType -> 7
+            is ConeCapturedType -> 6
+            is ConeDefinitelyNotNullType -> 5
+            is ConeUnionType -> 4
             is ConeIntersectionType -> 3
             is ConeStubType -> 2
             is ConeIntegerLiteralType -> 1
@@ -135,6 +136,17 @@ object ConeKotlinTypeComparator : Comparator<ConeKotlinType> {
                     "priority is inconsistent: ${a.render()} v.s. ${b.render()}"
                 }
                 val sizeDiff = a.intersectedTypes.size - b.intersectedTypes.size
+                if (sizeDiff != 0) {
+                    return sizeDiff
+                }
+                // Can't compare individual types from each side, since their orders are not guaranteed.
+                return a.hashCode() - b.hashCode()
+            }
+            is ConeUnionType -> {
+                require(b is ConeUnionType) {
+                    "priority is inconsistent: ${a.render()} v.s. ${b.render()}"
+                }
+                val sizeDiff = a.nestedTypes.size - b.nestedTypes.size
                 if (sizeDiff != 0) {
                     return sizeDiff
                 }

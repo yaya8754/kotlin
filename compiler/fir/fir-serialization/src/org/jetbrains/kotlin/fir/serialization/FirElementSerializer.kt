@@ -682,6 +682,10 @@ class FirElementSerializer private constructor(
                 }
                 return typeProto(approximatedType as ConeKotlinType)
             }
+            is ConeUnionType -> {
+                // TODO: union type serialization
+                return typeProto(type.commonSuperType)
+            }
             is ConeIntegerLiteralType -> {
                 throw IllegalStateException("Integer literal types should not persist up to the serializer: ${type.render()}")
             }

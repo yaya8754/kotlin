@@ -81,6 +81,12 @@ internal class ConeTypeIdeRenderer(
                 }
                 renderNullability(type.type)
             }
+            is ConeUnionType -> {
+                renderAnnotationList(annotations)
+                type.nestedTypes.joinTo(this, "|", prefix = "(", postfix = ")") {
+                    renderType(it)
+                }
+            }
             is ConeFlexibleType -> {
                 renderAnnotationList(annotations)
                 append(renderFlexibleType(renderType(type.lowerBound), renderType(type.upperBound)))
