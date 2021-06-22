@@ -1,0 +1,3 @@
+FILE: unionTypes.kt
+    public? final typealias Test = Int? | ( () -> Unit )
+    public? final? fun test(): R|kotlin/Unit| { LAZY_BLOCK }

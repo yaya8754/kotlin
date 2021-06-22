@@ -1577,6 +1577,14 @@ open class RawFirBuilder(
                         }
                     }
                 }
+                is KtUnionType -> FirUnionTypeRefBuilder().apply {
+                    this.source = source
+                    val types = unwrappedElement.getStubOrPsiChildren(
+                        KtStubElementTypes.TYPE_REFERENCE,
+                        KtStubElementTypes.TYPE_REFERENCE.arrayFactory
+                    ).mapNotNull { visitTypeReference(it, data) as? FirTypeRef }
+                    nestedTypes.addAll(types)
+                }
                 null -> FirErrorTypeRefBuilder().apply {
                     this.source = source
                     diagnostic = ConeSimpleDiagnostic("Unwrapped type is null", DiagnosticKind.Syntax)

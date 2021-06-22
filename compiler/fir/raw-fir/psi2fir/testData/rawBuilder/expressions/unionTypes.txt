@@ -1,0 +1,13 @@
+FILE: unionTypes.kt
+    public? final typealias Test = Int? | ( () -> Unit )
+    public? final? fun test(): R|kotlin/Unit| {
+        lval x: Int | String | Double | IntArray = IntegerLiteral(5)
+        lval y: ( (a: Int | Boolean, b: Int | java.lang.String) -> Int | Float ) = TODO#()
+        local final? fun foo(x: Boolean | ( (Int | Double, String) -> Int | Float )): Throwable | Int {
+        }
+
+        local final? fun <T, V> bar(): R|kotlin/Unit| {
+        }
+
+        bar#<Int | String, Boolean>()
+    }
