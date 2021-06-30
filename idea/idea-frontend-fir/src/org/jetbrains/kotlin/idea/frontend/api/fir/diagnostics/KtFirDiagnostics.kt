@@ -257,6 +257,10 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         abstract val type: KtType
     }
 
+    abstract class ResolutionToClassifier : KtFirDiagnostic<PsiElement>() {
+        override val diagnosticClass get() = ResolutionToClassifier::class
+    }
+
     abstract class SuperIsNotAnExpression : KtFirDiagnostic<PsiElement>() {
         override val diagnosticClass get() = SuperIsNotAnExpression::class
     }

@@ -52,6 +52,10 @@ class ConeFunctionExpectedError(val expression: String, val type: ConeKotlinType
     override val reason: String get() = "Expression '$expression' of type '$type' cannot be invoked as a function"
 }
 
+class ConeResolutionToClassifierError : ConeDiagnostic() {
+    override val reason: String get() = "Resolution to classifier"
+}
+
 class ConeHiddenCandidateError(
     val candidateSymbol: FirBasedSymbol<*>
 ) : ConeDiagnostic() {

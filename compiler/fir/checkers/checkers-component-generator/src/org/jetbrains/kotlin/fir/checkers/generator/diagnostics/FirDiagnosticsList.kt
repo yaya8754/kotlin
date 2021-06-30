@@ -123,6 +123,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<String>("expression")
             parameter<ConeKotlinType>("type")
         }
+        val RESOLUTION_TO_CLASSIFIER by error<PsiElement>()
     }
 
     val SUPER by object : DiagnosticGroup("Super") {

@@ -381,6 +381,13 @@ internal class FunctionExpectedImpl(
     override val firDiagnostic: FirPsiDiagnostic by weakRef(firDiagnostic)
 }
 
+internal class ResolutionToClassifierImpl(
+    firDiagnostic: FirPsiDiagnostic,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.ResolutionToClassifier(), KtAbstractFirDiagnostic<PsiElement> {
+    override val firDiagnostic: FirPsiDiagnostic by weakRef(firDiagnostic)
+}
+
 internal class SuperIsNotAnExpressionImpl(
     firDiagnostic: FirPsiDiagnostic,
     override val token: ValidityToken,
