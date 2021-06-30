@@ -681,6 +681,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
         }
 
         @Test
+        @TestMetadata("SafeCallNonNullReceiver2.kt")
+        public void testSafeCallNonNullReceiver2() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/SafeCallNonNullReceiver2.kt");
+        }
+
+        @Test
         @TestMetadata("SafeCallNonNullReceiverReturnNull.kt")
         public void testSafeCallNonNullReceiverReturnNull() throws Exception {
             runTest("compiler/testData/diagnostics/tests/SafeCallNonNullReceiverReturnNull.kt");
@@ -34834,15 +34840,15 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             }
 
             @Test
-            @TestMetadata("experimentalAfterRelease.kt")
-            public void testExperimentalAfterRelease() throws Exception {
-                runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/experimentalAfterRelease.kt");
-            }
-
-            @Test
             @TestMetadata("experimentalAnnotationOnConstructorProperty.kt")
             public void testExperimentalAnnotationOnConstructorProperty() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/experimentalAnnotationOnConstructorProperty.kt");
+            }
+
+            @Test
+            @TestMetadata("experimentalBeforeRelease.kt")
+            public void testExperimentalBeforeRelease() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/experimentalBeforeRelease.kt");
             }
 
             @Test
