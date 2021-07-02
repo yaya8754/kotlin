@@ -543,6 +543,18 @@ public class FirDiagnosticTestGenerated extends AbstractFirDiagnosticTest {
         }
 
         @Test
+        @TestMetadata("unionTypeCallResolve.kt")
+        public void testUnionTypeCallResolve() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolve/unionTypeCallResolve.kt");
+        }
+
+        @Test
+        @TestMetadata("unionTypeInOperatorCall.kt")
+        public void testUnionTypeInOperatorCall() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolve/unionTypeInOperatorCall.kt");
+        }
+
+        @Test
         @TestMetadata("varargInPrimaryConstructor.kt")
         public void testVarargInPrimaryConstructor() throws Exception {
             runTest("compiler/fir/analysis-tests/testData/resolve/varargInPrimaryConstructor.kt");
@@ -1650,6 +1662,12 @@ public class FirDiagnosticTestGenerated extends AbstractFirDiagnosticTest {
                 @TestMetadata("exhaustiveness_sealedSubClass.kt")
                 public void testExhaustiveness_sealedSubClass() throws Exception {
                     runTest("compiler/fir/analysis-tests/testData/resolve/exhaustiveness/positive/exhaustiveness_sealedSubClass.kt");
+                }
+
+                @Test
+                @TestMetadata("exhaustiveness_unionType.kt")
+                public void testExhaustiveness_unionType() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolve/exhaustiveness/positive/exhaustiveness_unionType.kt");
                 }
 
                 @Test
@@ -3869,6 +3887,12 @@ public class FirDiagnosticTestGenerated extends AbstractFirDiagnosticTest {
             @TestMetadata("castToBareType.kt")
             public void testCastToBareType() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/types/castToBareType.kt");
+            }
+
+            @Test
+            @TestMetadata("nestedTypesInUnionType.kt")
+            public void testNestedTypesInUnionType() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/types/nestedTypesInUnionType.kt");
             }
 
             @Test

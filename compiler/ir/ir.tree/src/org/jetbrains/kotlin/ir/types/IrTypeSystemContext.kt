@@ -158,6 +158,12 @@ interface IrTypeSystemContext : TypeSystemContext, TypeSystemCommonSuperTypesCon
 
     override fun TypeConstructorMarker.isIntersection() = false
 
+    override fun TypeConstructorMarker.isUnion() = TODO()//this is IrUnionType
+
+    override fun TypeConstructorMarker.getNestedTypesIfUnionOrNull(): Collection<KotlinTypeMarker>? {
+        TODO() //(this as? IrUnionType)?.nestedTypes
+    }
+
     override fun TypeConstructorMarker.isClassTypeConstructor() = this is IrClassSymbol
 
     override fun TypeConstructorMarker.isInterface(): Boolean {

@@ -1,0 +1,45 @@
+FILE: unionTypeCallResolve.kt
+    public abstract interface I : R|kotlin/Any| {
+        public open fun foo(): R|kotlin/Int| {
+            ^foo Int(5)
+        }
+
+    }
+    public open class O : R|kotlin/Any| {
+        public constructor(value: R|kotlin/Int|): R|O| {
+            super<R|kotlin/Any|>()
+        }
+
+        public final val value: R|kotlin/Int| = R|<local>/value|
+            public get(): R|kotlin/Int|
+
+    }
+    public final class A : R|O|, R|I| {
+        public constructor(): R|A| {
+            super<R|O|>(Int(5))
+        }
+
+    }
+    public final class B : R|O|, R|I| {
+        public constructor(): R|B| {
+            super<R|O|>(Int(6))
+        }
+
+    }
+    public final class C : R|O| {
+        public constructor(): R|C| {
+            super<R|O|>(Int(7))
+        }
+
+    }
+    public final fun bar(): R|kotlin/Unit| {
+        lval x: R|it(kotlin/Int | kotlin/String)| = R|kotlin/TODO|()
+        R|<local>/x|.R|kotlin/Any.hashCode|()
+        lval y: R|it(A | B)| = R|kotlin/TODO|()
+        R|<local>/y|.R|/O.value|
+        R|<local>/y|.R|/I.foo|()
+        R|<local>/y|.<Unresolved name: boo>#()
+        lval z: R|it(A | B | C)| = R|kotlin/TODO|()
+        R|<local>/z|.R|/O.value|
+        R|<local>/z|.<Unresolved name: foo>#()
+    }

@@ -104,6 +104,15 @@ interface ClassicTypeSystemContext : TypeSystemInferenceExtensionContext, TypeSy
         return this is IntersectionTypeConstructor
     }
 
+    override fun TypeConstructorMarker.isUnion(): Boolean {
+        // union-types will be prohibited in FE 1.0
+        return false
+    }
+
+    override fun TypeConstructorMarker.getNestedTypesIfUnionOrNull(): Collection<KotlinTypeMarker>? {
+        return null
+    }
+
     override fun identicalArguments(a: SimpleTypeMarker, b: SimpleTypeMarker): Boolean {
         require(a is SimpleType, a::errorMessage)
         require(b is SimpleType, b::errorMessage)

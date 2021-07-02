@@ -246,7 +246,12 @@ object AbstractTypeChecker {
         val preparedSubType = context.prepareType(context.refineType(subType))
         val preparedSuperType = context.prepareType(context.refineType(superType))
 
-        checkSubtypeForSpecialCases(context, preparedSubType.lowerBoundIfFlexible(), preparedSuperType.upperBoundIfFlexible())?.let {
+        checkSubtypeForSpecialCases(
+            context,
+            preparedSubType.lowerBoundIfFlexible(),
+            preparedSuperType.upperBoundIfFlexible(),
+            isFromNullabilityConstraint
+        )?.let {
             context.addSubtypeConstraint(preparedSubType, preparedSuperType, isFromNullabilityConstraint)
             return it
         }
@@ -476,7 +481,8 @@ object AbstractTypeChecker {
     private fun checkSubtypeForSpecialCases(
         context: AbstractTypeCheckerContext,
         subType: SimpleTypeMarker,
-        superType: SimpleTypeMarker
+        superType: SimpleTypeMarker,
+        isFromNullabilityConstraint: Boolean
     ): Boolean? = with(context.typeSystemContext) {
         if (subType.isError() || superType.isError()) {
             if (context.isErrorTypeEqualsToAnything) return true
@@ -535,6 +541,17 @@ object AbstractTypeChecker {
                 context.typeSystemContext.getTypeParameterForArgumentInBaseIfItEqualToTarget(baseType = superType, targetType = subType)
             if (typeParameter != null && typeParameter.hasRecursiveBounds(superType.typeConstructor())) {
                 return true
+            }
+        }
+
+        if (superTypeConstructor.isUnion() || subTypeConstructor.isUnion()) {
+            val superTypeNestedTypes = superTypeConstructor.getNestedTypesIfUnionOrNull() ?: listOf(superType)
+            val subTypeNestedTypes = subTypeConstructor.getNestedTypesIfUnionOrNull() ?: listOf(subType)
+
+            return subTypeNestedTypes.all { subTypeNested ->
+                superTypeNestedTypes.any { superTypeNested ->
+                    isSubtypeOf(context, subTypeNested, superTypeNested, isFromNullabilityConstraint)
+                }
             }
         }
 

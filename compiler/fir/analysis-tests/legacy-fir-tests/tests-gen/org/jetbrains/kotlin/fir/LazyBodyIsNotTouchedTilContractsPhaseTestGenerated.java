@@ -459,6 +459,16 @@ public class LazyBodyIsNotTouchedTilContractsPhaseTestGenerated extends Abstract
         runTest("compiler/fir/analysis-tests/testData/resolve/typesInLocalFunctions.kt");
     }
 
+    @TestMetadata("unionTypeCallResolve.kt")
+    public void testUnionTypeCallResolve() throws Exception {
+        runTest("compiler/fir/analysis-tests/testData/resolve/unionTypeCallResolve.kt");
+    }
+
+    @TestMetadata("unionTypeInOperatorCall.kt")
+    public void testUnionTypeInOperatorCall() throws Exception {
+        runTest("compiler/fir/analysis-tests/testData/resolve/unionTypeInOperatorCall.kt");
+    }
+
     @TestMetadata("varargInPrimaryConstructor.kt")
     public void testVarargInPrimaryConstructor() throws Exception {
         runTest("compiler/fir/analysis-tests/testData/resolve/varargInPrimaryConstructor.kt");
@@ -1447,6 +1457,11 @@ public class LazyBodyIsNotTouchedTilContractsPhaseTestGenerated extends Abstract
             @TestMetadata("exhaustiveness_sealedSubClass.kt")
             public void testExhaustiveness_sealedSubClass() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/exhaustiveness/positive/exhaustiveness_sealedSubClass.kt");
+            }
+
+            @TestMetadata("exhaustiveness_unionType.kt")
+            public void testExhaustiveness_unionType() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/exhaustiveness/positive/exhaustiveness_unionType.kt");
             }
 
             @TestMetadata("nestedIfInLambda.kt")
@@ -3469,6 +3484,11 @@ public class LazyBodyIsNotTouchedTilContractsPhaseTestGenerated extends Abstract
         @TestMetadata("castToBareType.kt")
         public void testCastToBareType() throws Exception {
             runTest("compiler/fir/analysis-tests/testData/resolve/types/castToBareType.kt");
+        }
+
+        @TestMetadata("nestedTypesInUnionType.kt")
+        public void testNestedTypesInUnionType() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolve/types/nestedTypesInUnionType.kt");
         }
 
         @TestMetadata("typeAliasInArguments.kt")
