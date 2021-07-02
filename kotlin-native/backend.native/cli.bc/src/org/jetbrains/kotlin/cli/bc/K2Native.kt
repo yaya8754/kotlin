@@ -307,6 +307,15 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
                         true
                     }
                 })
+                put(RUNTIME_ASSERTS_MODE, when (arguments.runtimeAssertsMode) {
+                    "ignore" -> RuntimeAssertsMode.IGNORE
+                    "log" -> RuntimeAssertsMode.LOG
+                    "panic" -> RuntimeAssertsMode.PANIC
+                    else -> {
+                        configuration.report(ERROR, "Unsupported runtime asserts mode ${arguments.runtimeAssertsMode}")
+                        RuntimeAssertsMode.IGNORE
+                    }
+                })
             }
         }
     }

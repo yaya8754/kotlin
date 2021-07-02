@@ -14,6 +14,7 @@
 
 // These are defined by setRuntimeConstGlobals in IrToBitcode.kt
 extern "C" const int32_t KonanNeedDebugInfo;
+extern "C" const int32_t Kotlin_runtimeAssertsMode;
 
 namespace kotlin {
 namespace compiler {
@@ -24,12 +25,23 @@ enum class DestroyRuntimeMode : int32_t {
     kOnShutdown = 1,
 };
 
+// Must match RuntimeAssertsMode in RuntimeAssertsMode.kt
+enum class RuntimeAssertsMode : int32_t {
+    kIgnore = 0,
+    kLog = 1,
+    kPanic = 2,
+};
+
 DestroyRuntimeMode destroyRuntimeMode() noexcept;
 
 bool gcAggressive() noexcept;
 
 ALWAYS_INLINE inline bool shouldContainDebugInfo() noexcept {
     return KonanNeedDebugInfo != 0;
+}
+
+ALWAYS_INLINE inline RuntimeAssertsMode runtimeAssertsMode() noexcept {
+    return static_cast<RuntimeAssertsMode>(Kotlin_runtimeAssertsMode);
 }
 
 } // namespace compiler
