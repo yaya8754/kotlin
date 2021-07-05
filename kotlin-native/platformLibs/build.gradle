@@ -85,7 +85,7 @@ rootProject.project("kotlin-native").ext.platformManager.enabled.each { target -
         libTask.configure {
             it.dependsOn df.config.depends.collect { defFileToLibName(targetName, it) }
             it.dependsOn ":kotlin-native:${targetName}CrossDist"
-            it.enableParallel = true
+            it.enableParallel = false
         }
 
         def klibInstallTask = tasks.register("$libName", KlibInstall) {
