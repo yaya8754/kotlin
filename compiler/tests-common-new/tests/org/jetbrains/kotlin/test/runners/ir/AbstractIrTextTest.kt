@@ -72,6 +72,10 @@ abstract class AbstractIrTextTestBase(
             ::IrTreeVerifierHandler,
             ::IrPrettyKotlinDumpHandler
         )
+
+        useAfterAnalysisCheckers(
+            ::BlackBoxCodegenSuppressor
+        )
     }
 }
 
@@ -82,8 +86,7 @@ open class AbstractFir2IrTextTest : AbstractIrTextTestBase(FrontendKinds.FIR) {
         super.configure(builder)
         with(builder) {
             useAfterAnalysisCheckers(
-                ::FirIrDumpIdenticalChecker,
-                ::BlackBoxCodegenSuppressor
+                ::FirIrDumpIdenticalChecker
             )
         }
     }

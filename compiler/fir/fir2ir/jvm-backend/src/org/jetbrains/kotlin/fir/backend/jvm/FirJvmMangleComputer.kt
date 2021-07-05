@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.fir.backend.jvm
 
+import com.sun.tools.javah.Mangle
 import org.jetbrains.kotlin.backend.common.serialization.mangle.KotlinMangleComputer
 import org.jetbrains.kotlin.backend.common.serialization.mangle.MangleConstant
 import org.jetbrains.kotlin.backend.common.serialization.mangle.MangleMode
@@ -263,6 +264,14 @@ open class FirJvmMangleComputer(
             }
             is ConeCapturedType -> {
                 mangleType(tBuilder, type.lowerType ?: type.constructor.supertypes!!.first())
+            }
+            is ConeUnionType -> {
+                type.nestedTypes.forEachIndexed { index, nestedType ->
+                    mangleType(tBuilder, nestedType)
+                    if (index != type.nestedTypes.lastIndex) {
+                        tBuilder.appendSignature(MangleConstant.VARIANCE_SEPARATOR)
+                    }
+                }
             }
             else -> error("Unexpected type $type")
         }

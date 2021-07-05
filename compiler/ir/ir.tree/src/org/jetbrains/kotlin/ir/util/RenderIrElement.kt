@@ -107,11 +107,13 @@ class RenderIrElementVisitor(private val normalizeNames: Boolean = false, privat
     private fun IrType.render(): String =
         "${renderTypeAnnotations(annotations)}${renderTypeInner()}"
 
-    private fun IrType.renderTypeInner() =
+    private fun IrType.renderTypeInner(): String =
         when (this) {
             is IrDynamicType -> "dynamic"
 
             is IrErrorType -> "IrErrorType(${if (verboseErrorTypes) originalKotlinType else null})"
+
+            is IrUnionType -> commonSuperType.renderTypeInner()
 
             is IrSimpleType -> buildTrimEnd {
                 append(classifier.renderClassifierFqn())

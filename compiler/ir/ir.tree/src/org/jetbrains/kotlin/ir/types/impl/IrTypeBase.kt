@@ -114,3 +114,40 @@ class IrCapturedType(
         return (captureStatus.hashCode() * 31 + (lowerType?.hashCode() ?: 0)) * 31 + constructor.hashCode()
     }
 }
+
+class IrUnionTypeImpl(
+    override val nestedTypes: Set<IrType>,
+    override val commonSuperType: IrSimpleType,
+    override val annotations: List<IrConstructorCall>,
+    override val abbreviation: IrTypeAbbreviation? = null
+) : IrUnionType {
+
+    override val classifier: IrClassifierSymbol
+        get() = commonSuperType.classifier
+
+    override val hasQuestionMark: Boolean
+        get() = nestedTypes.any { (it as? IrSimpleType)?.hasQuestionMark == true }
+
+    override val arguments: List<IrTypeArgument>
+        get() = nestedTypes.flatMap { (it as? IrSimpleType)?.arguments ?: emptyList() }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as IrUnionTypeImpl
+
+        if (nestedTypes != other.nestedTypes) return false
+        if (annotations != other.annotations) return false
+        if (abbreviation != other.abbreviation) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = nestedTypes.hashCode()
+        result = 31 * result + annotations.hashCode()
+        result = 31 * result + (abbreviation?.hashCode() ?: 0)
+        return result
+    }
+}

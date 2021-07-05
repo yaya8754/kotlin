@@ -55,3 +55,8 @@ interface IrTypeAbbreviation : IrAnnotationContainer {
     val hasQuestionMark: Boolean
     val arguments: List<IrTypeArgument>
 }
+
+interface IrUnionType : IrSimpleType {
+    val nestedTypes: Set<IrType>
+    val commonSuperType: IrSimpleType
+}

@@ -30,4 +30,20 @@ public class Fir2IrSpecificTextTestGenerated extends AbstractFir2IrTextTest {
     public void testSample() throws Exception {
         runTest("compiler/fir/fir2ir/testData/ir/irText/sample.kt");
     }
+
+    @Nested
+    @TestMetadata("compiler/fir/fir2ir/testData/ir/irText/unionTypes")
+    @TestDataPath("$PROJECT_ROOT")
+    public class UnionTypes {
+        @Test
+        public void testAllFilesPresentInUnionTypes() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/fir2ir/testData/ir/irText/unionTypes"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+        }
+
+        @Test
+        @TestMetadata("simpleUnionTypes.kt")
+        public void testSimpleUnionTypes() throws Exception {
+            runTest("compiler/fir/fir2ir/testData/ir/irText/unionTypes/simpleUnionTypes.kt");
+        }
+    }
 }

@@ -415,6 +415,13 @@ private class KotlinLikeDumper(val p: Printer, val options: KotlinLikeDumpOption
         // TODO don't print `Any?` as upper bound?
         printAnnotationsWithNoIndent()
         when (this) {
+            is IrUnionType -> {
+                nestedTypes.forEachIndexed { i, type ->
+                    p(i > 0, " | ")
+
+                    type.printTypeWithNoIndent()
+                }
+            }
             is IrSimpleType -> {
                 // TODO abbreviation
 

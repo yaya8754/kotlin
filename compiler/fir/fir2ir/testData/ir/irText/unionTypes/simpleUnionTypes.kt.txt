@@ -1,0 +1,12 @@
+typealias Foo = Int |  String
+fun foo(a: Function1<Any, Number>): Boolean |  String {
+  return "foo"
+}
+
+fun bar() {
+  try { // BLOCK
+  }
+  catch (e: IllegalArgumentException |  NullPointerException)e.printStackTrace()
+  finally { // BLOCK
+  }
+}

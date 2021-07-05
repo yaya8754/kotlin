@@ -16,11 +16,13 @@ import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.impl.*
 import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
+import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeArgument
 import org.jetbrains.kotlin.ir.types.IrTypeProjection
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 import org.jetbrains.kotlin.ir.types.impl.IrStarProjectionImpl
+import org.jetbrains.kotlin.ir.types.impl.IrUnionTypeImpl
 import org.jetbrains.kotlin.ir.types.impl.makeTypeProjection
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -160,8 +162,12 @@ class Fir2IrTypeConverter(
                 intersectedTypes.first().toIrType(typeContext)
             }
             is ConeUnionType -> {
-                // TODO: create IrUnionType
-                createErrorType()
+                IrUnionTypeImpl(
+                    nestedTypes.map { it.toIrType(typeContext, annotations, hasFlexibleNullability) }.toSet(),
+                    approximateToIrSimpleType(commonSuperType)
+                        ?: error("can't approximate ${commonSuperType.render()}"),
+                    with(annotationGenerator) { annotations.toIrAnnotations() }
+                )
             }
             is ConeStubType -> createErrorType()
             is ConeIntegerLiteralType -> createErrorType()
@@ -247,6 +253,19 @@ class Fir2IrTypeConverter(
         return substitutor.substituteOrSelf(type).let {
             typeApproximator.approximateToSuperType(it, typeApproximatorConfiguration) ?: it
         }
+    }
+
+    private fun approximateToIrSimpleType(type: ConeKotlinType): IrSimpleType? {
+        return when (type) {
+            //TODO: information about interfaces
+            is ConeIntersectionType -> (type.intersectedTypes.find {
+                with(session.typeContext) {
+                    !it.typeConstructor().isInterface()
+                }
+            } ?: session.typeContext.anyType()).toIrType()
+
+            else -> type.toIrType()
+        } as? IrSimpleType
     }
 }
 
