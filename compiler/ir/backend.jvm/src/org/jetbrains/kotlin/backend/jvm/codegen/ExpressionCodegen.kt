@@ -1196,7 +1196,11 @@ class ExpressionCodegen(
         for (clause in catches) {
             val clauseStart = markNewLabel()
             val parameter = clause.catchParameter
-            val descriptorType = parameter.asmType
+            val descriptorType =
+                if (parameter.type is IrUnionType)
+                    (parameter.type as IrUnionType).commonSuperType.asmType
+                else
+                    parameter.asmType
             val index = frameMap.enter(clause.catchParameter, descriptorType)
             clause.markLineNumber(true)
             mv.store(index, descriptorType)
@@ -1221,7 +1225,13 @@ class ExpressionCodegen(
                 mv.goTo(tryCatchBlockEnd)
             }
 
-            genTryCatchCover(clauseStart, tryBlockStart, tryBlockEnd, tryBlockGaps, descriptorType.internalName)
+            if (parameter.type is IrUnionType) {
+                (parameter.type as IrUnionType).nestedTypes.forEach {
+                    genTryCatchCover(clauseStart, tryBlockStart, tryBlockEnd, tryBlockGaps, it.asmType.internalName)
+                }
+            } else {
+                genTryCatchCover(clauseStart, tryBlockStart, tryBlockEnd, tryBlockGaps, descriptorType.internalName)
+            }
         }
 
         if (tryInfo is TryWithFinallyInfo) {

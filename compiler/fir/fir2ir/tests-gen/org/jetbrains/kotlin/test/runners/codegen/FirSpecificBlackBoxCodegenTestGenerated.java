@@ -30,4 +30,20 @@ public class FirSpecificBlackBoxCodegenTestGenerated extends AbstractFirBlackBox
     public void testSample() throws Exception {
         runTest("compiler/fir/fir2ir/testData/codegen/box/sample.kt");
     }
+
+    @Nested
+    @TestMetadata("compiler/fir/fir2ir/testData/codegen/box/unionTypes")
+    @TestDataPath("$PROJECT_ROOT")
+    public class UnionTypes {
+        @Test
+        public void testAllFilesPresentInUnionTypes() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/fir2ir/testData/codegen/box/unionTypes"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+        }
+
+        @Test
+        @TestMetadata("simpleMulticatch.kt")
+        public void testSimpleMulticatch() throws Exception {
+            runTest("compiler/fir/fir2ir/testData/codegen/box/unionTypes/simpleMulticatch.kt");
+        }
+    }
 }

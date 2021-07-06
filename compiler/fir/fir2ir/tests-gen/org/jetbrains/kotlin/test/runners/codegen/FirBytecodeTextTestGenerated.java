@@ -350,6 +350,12 @@ public class FirBytecodeTextTestGenerated extends AbstractFirBytecodeTextTest {
     }
 
     @Test
+    @TestMetadata("multicatch.kt")
+    public void testMulticatch() throws Exception {
+        runTest("compiler/testData/codegen/bytecodeText/multicatch.kt");
+    }
+
+    @Test
     @TestMetadata("noAccessorForProtectedInSamePackageCrossinline.kt")
     public void testNoAccessorForProtectedInSamePackageCrossinline() throws Exception {
         runTest("compiler/testData/codegen/bytecodeText/noAccessorForProtectedInSamePackageCrossinline.kt");
