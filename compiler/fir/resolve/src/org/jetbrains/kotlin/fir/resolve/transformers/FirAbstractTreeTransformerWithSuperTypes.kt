@@ -49,9 +49,6 @@ abstract class FirAbstractTreeTransformerWithSuperTypes(
         firClass: FirClass,
         data: Any?
     ): FirStatement {
-        if (needReplacePhase(firClass)) {
-            firClass.replaceResolvePhase(transformerPhase)
-        }
         return withScopeCleanup {
             // Otherwise annotations may try to resolve
             // themselves as inner classes of the `firClass`

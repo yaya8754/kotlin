@@ -52,7 +52,6 @@ open class FirBodyResolveTransformer(
         return context.withFile(file, components) {
             firTowerDataContextCollector?.addFileContext(file, context.towerDataContext)
 
-            file.replaceResolvePhase(transformerPhase)
             @Suppress("UNCHECKED_CAST")
             transformDeclarationContent(file, data) as FirFile
         }
