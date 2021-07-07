@@ -1,0 +1,62 @@
+FILE: exhaustiveness_unionType.kt
+    public final fun test_1(x: R|it(kotlin/Int | kotlin/String | kotlin/Boolean)|): R|kotlin/Unit| {
+        lval y: R|kotlin/Int| = when (R|<local>/x|) {
+            ($subj$ is R|kotlin/Int|) ->  {
+                Int(1)
+            }
+            ($subj$ is R|kotlin/String|) ->  {
+                Int(2)
+            }
+            ($subj$ is R|kotlin/Boolean|) ->  {
+                Int(3)
+            }
+        }
+
+        lval z: R|kotlin/Unit| = when (R|<local>/x|) {
+            ($subj$ is R|kotlin/Int|) ->  {
+                Int(1)
+            }
+            ($subj$ is R|kotlin/String|) ->  {
+                Int(2)
+            }
+        }
+
+        lval w: R|kotlin/Int| = when (R|<local>/x|) {
+            ($subj$ !is R|kotlin/Float|) ->  {
+                Int(1)
+            }
+        }
+
+    }
+    public final fun test_2(x: R|it(kotlin/Int? | kotlin/Boolean)?|): R|kotlin/Unit| {
+        lval y: R|kotlin/Unit| = when (R|<local>/x|) {
+            ($subj$ is R|kotlin/Int|) ->  {
+                Int(1)
+            }
+            ($subj$ is R|kotlin/Boolean|) ->  {
+                Int(2)
+            }
+        }
+
+        lval z: R|kotlin/Int| = when (R|<local>/x|) {
+            ($subj$ is R|kotlin/Int|) ->  {
+                Int(1)
+            }
+            ($subj$ is R|kotlin/Boolean|) ->  {
+                Int(2)
+            }
+            ==($subj$, Null(null)) ->  {
+                Int(3)
+            }
+        }
+
+        lval w: R|kotlin/Int| = when (R|<local>/x|) {
+            ($subj$ is R|kotlin/Int|) ->  {
+                Int(1)
+            }
+            ($subj$ is R|kotlin/Boolean?|) ->  {
+                Int(2)
+            }
+        }
+
+    }
