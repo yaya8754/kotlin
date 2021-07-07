@@ -135,6 +135,7 @@ internal class FirLazyDeclarationResolver(private val firFileBuilder: FirFileBui
         if (toPhase == FirResolvePhase.RAW_FIR) return
         if (firFile.resolvePhase == FirResolvePhase.RAW_FIR) {
             firFile.transform<FirElement, Any?>(FirImportResolveTransformer(firFile.moduleData.session), null)
+            firFile.replaceResolvePhase(FirResolvePhase.IMPORTS)
             firFile.ensurePhase(FirResolvePhase.IMPORTS)
         }
         if (checkPCE) checkCanceled()

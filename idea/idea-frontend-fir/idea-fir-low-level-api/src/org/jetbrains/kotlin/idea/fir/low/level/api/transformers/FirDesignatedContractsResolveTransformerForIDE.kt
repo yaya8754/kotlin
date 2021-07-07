@@ -15,10 +15,7 @@ import org.jetbrains.kotlin.idea.fir.low.level.api.FirPhaseRunner
 import org.jetbrains.kotlin.idea.fir.low.level.api.api.FirDeclarationDesignationWithFile
 import org.jetbrains.kotlin.idea.fir.low.level.api.lazy.resolve.FirLazyBodiesCalculator
 import org.jetbrains.kotlin.idea.fir.low.level.api.transformers.FirLazyTransformerForIDE.Companion.isResolvedForAllDeclarations
-import org.jetbrains.kotlin.idea.fir.low.level.api.transformers.FirLazyTransformerForIDE.Companion.updateResolvedPhaseForDeclarationAndChildren
-import org.jetbrains.kotlin.idea.fir.low.level.api.util.ensureDesignation
 import org.jetbrains.kotlin.idea.fir.low.level.api.util.ensurePhase
-import org.jetbrains.kotlin.idea.fir.low.level.api.util.isTargetCallableDeclarationAndInPhase
 
 /**
  * Transform designation into CONTRACTS declaration. Affects only for target declaration and it's children
@@ -43,7 +40,6 @@ internal class FirDesignatedContractsResolveTransformerForIDE(
 
     override fun transformDeclarationContent(declaration: FirDeclaration, data: ResolutionMode): FirDeclaration =
         ideDeclarationTransformer.transformDeclarationContent(this, declaration, data) {
-            designation.declaration.updateResolvedPhaseForDeclarationAndChildren(FirResolvePhase.CONTRACTS)
             super.transformDeclarationContent(declaration, data)
         }
 
@@ -52,9 +48,13 @@ internal class FirDesignatedContractsResolveTransformerForIDE(
 
     override fun transformDeclaration(phaseRunner: FirPhaseRunner) {
         if (designation.isResolvedForAllDeclarations(FirResolvePhase.CONTRACTS, declarationPhaseDowngraded)) return
-        designation.declaration.updateResolvedPhaseForDeclarationAndChildren(FirResolvePhase.CONTRACTS)
-        if (designation.isTargetCallableDeclarationAndInPhase(FirResolvePhase.CONTRACTS)) return
-        designation.ensureDesignation(FirResolvePhase.STATUS)
+        check(designation.isResolvedForAllDeclarations(FirResolvePhase.STATUS, declarationPhaseDowngraded))
+        designation.declaration.replaceResolvePhase(FirResolvePhase.CONTRACTS)
+
+//        if (designation.isResolvedForAllDeclarations(FirResolvePhase.CONTRACTS, declarationPhaseDowngraded)) return
+//        designation.declaration.updateResolvedPhaseForDeclarationAndChildren(FirResolvePhase.CONTRACTS)
+//        if (designation.isTargetCallableDeclarationAndInPhase(FirResolvePhase.CONTRACTS)) return
+//        designation.ensureDesignation(FirResolvePhase.STATUS)
 
         FirLazyBodiesCalculator.calculateLazyBodiesInside(designation)
         phaseRunner.runPhaseWithCustomResolve(FirResolvePhase.CONTRACTS) {
@@ -62,8 +62,9 @@ internal class FirDesignatedContractsResolveTransformerForIDE(
         }
 
         ideDeclarationTransformer.ensureDesignationPassed()
-        ensureResolved(designation.declaration)
-        ensureResolvedDeep(designation.declaration)
+//        designation.declaration.replaceResolvePhase(FirResolvePhase.CONTRACTS)
+//        ensureResolved(designation.declaration)
+//        ensureResolvedDeep(designation.declaration)
     }
 
     override fun ensureResolved(declaration: FirDeclaration) {
@@ -72,8 +73,8 @@ internal class FirDesignatedContractsResolveTransformerForIDE(
                 declaration.ensurePhase(FirResolvePhase.CONTRACTS)
             is FirProperty -> {
                 declaration.ensurePhase(FirResolvePhase.CONTRACTS)
-                declaration.getter?.ensurePhase(FirResolvePhase.CONTRACTS)
-                declaration.setter?.ensurePhase(FirResolvePhase.CONTRACTS)
+//                declaration.getter?.ensurePhase(FirResolvePhase.CONTRACTS)
+//                declaration.setter?.ensurePhase(FirResolvePhase.CONTRACTS)
             }
             is FirClass, is FirTypeAlias, is FirEnumEntry, is FirField -> Unit
             else -> error("Unexpected type: ${declaration::class.simpleName}")

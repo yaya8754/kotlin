@@ -14,8 +14,6 @@ import org.jetbrains.kotlin.fir.resolve.transformers.StatusComputationSession
 import org.jetbrains.kotlin.idea.fir.low.level.api.FirPhaseRunner
 import org.jetbrains.kotlin.idea.fir.low.level.api.api.FirDeclarationDesignationWithFile
 import org.jetbrains.kotlin.idea.fir.low.level.api.transformers.FirLazyTransformerForIDE.Companion.isResolvedForAllDeclarations
-import org.jetbrains.kotlin.idea.fir.low.level.api.transformers.FirLazyTransformerForIDE.Companion.updateResolvedPhaseForDeclarationAndChildren
-import org.jetbrains.kotlin.idea.fir.low.level.api.util.ensureDesignation
 import org.jetbrains.kotlin.idea.fir.low.level.api.util.ensurePhase
 
 /**
@@ -43,8 +41,12 @@ internal class FirDesignatedStatusResolveTransformerForIDE(
 
     override fun transformDeclaration(phaseRunner: FirPhaseRunner) {
         if (designation.isResolvedForAllDeclarations(FirResolvePhase.STATUS, declarationPhaseDowngraded)) return
-        designation.declaration.updateResolvedPhaseForDeclarationAndChildren(FirResolvePhase.STATUS)
-        designation.ensureDesignation(FirResolvePhase.TYPES)
+        check(designation.isResolvedForAllDeclarations(FirResolvePhase.TYPES, declarationPhaseDowngraded))
+        designation.declaration.replaceResolvePhase(FirResolvePhase.STATUS)
+
+//        if (designation.isResolvedForAllDeclarations(FirResolvePhase.STATUS, declarationPhaseDowngraded)) return
+//        designation.declaration.updateResolvedPhaseForDeclarationAndChildren(FirResolvePhase.STATUS)
+//        designation.ensureDesignation(FirResolvePhase.TYPES)
 
         val transformer = FirDesignatedStatusResolveTransformerForIDE()
         phaseRunner.runPhaseWithCustomResolve(FirResolvePhase.STATUS) {
@@ -52,9 +54,11 @@ internal class FirDesignatedStatusResolveTransformerForIDE(
         }
 
         transformer.designationTransformer.ensureDesignationPassed()
-        designation.path.forEach(::ensureResolved)
-        ensureResolved(designation.declaration)
-        ensureResolvedDeep(designation.declaration)
+//        designation.declaration.replaceResolvePhase(FirResolvePhase.STATUS)
+
+//        designation.path.forEach(::ensureResolved)
+//        ensureResolved(designation.declaration)
+        //ensureResolvedDeep(designation.declaration)
     }
 
     override fun ensureResolved(declaration: FirDeclaration) {

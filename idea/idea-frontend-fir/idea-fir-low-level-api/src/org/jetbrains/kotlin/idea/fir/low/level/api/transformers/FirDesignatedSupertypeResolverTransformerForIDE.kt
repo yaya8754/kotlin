@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.idea.fir.low.level.api.file.builder.ModuleFileCache
 import org.jetbrains.kotlin.idea.fir.low.level.api.file.builder.runCustomResolveUnderLock
 import org.jetbrains.kotlin.idea.fir.low.level.api.lazy.resolve.FirLazyDeclarationResolver
 import org.jetbrains.kotlin.idea.fir.low.level.api.transformers.FirLazyTransformerForIDE.Companion.isResolvedForAllDeclarations
-import org.jetbrains.kotlin.idea.fir.low.level.api.transformers.FirLazyTransformerForIDE.Companion.updateResolvedPhaseForDeclarationAndChildren
 import org.jetbrains.kotlin.idea.fir.low.level.api.util.checkCanceled
 import org.jetbrains.kotlin.idea.fir.low.level.api.util.ensurePhase
 
@@ -156,6 +155,9 @@ internal class FirDesignatedSupertypeResolverTransformerForIDE(
         check(designation.firFile.resolvePhase >= FirResolvePhase.IMPORTS) {
             "Invalid resolve phase of file. Should be IMPORTS but found ${designation.firFile.resolvePhase}"
         }
+        if (designation.isResolvedForAllDeclarations(FirResolvePhase.SUPER_TYPES, declarationPhaseDowngraded)) return
+        check(designation.isResolvedForAllDeclarations(FirResolvePhase.RAW_FIR, declarationPhaseDowngraded))
+        designation.declaration.replaceResolvePhase(FirResolvePhase.SUPER_TYPES)
 
         val targetDesignation = if (designation.declaration !is FirClassLikeDeclaration) {
             val resolvableTarget = designation.path.lastOrNull() ?: return
@@ -164,18 +166,20 @@ internal class FirDesignatedSupertypeResolverTransformerForIDE(
             FirDeclarationDesignationWithFile(targetPath, resolvableTarget, designation.firFile)
         } else designation
 
-        if (targetDesignation.isResolvedForAllDeclarations(FirResolvePhase.SUPER_TYPES, declarationPhaseDowngraded)) return
-        targetDesignation.declaration.updateResolvedPhaseForDeclarationAndChildren(FirResolvePhase.SUPER_TYPES)
+//        if (targetDesignation.isResolvedForAllDeclarations(FirResolvePhase.SUPER_TYPES, declarationPhaseDowngraded)) return
+//        targetDesignation.declaration.updateResolvedPhaseForDeclarationAndChildren(FirResolvePhase.SUPER_TYPES)
+
 
         phaseRunner.runPhaseWithCustomResolve(FirResolvePhase.SUPER_TYPES) {
             val collected = collect(targetDesignation)
             supertypeComputationSession.breakLoops(session)
             apply(collected)
         }
+//        targetDesignation.declaration.replaceResolvePhase(FirResolvePhase.SUPER_TYPES)
 
-        designation.path.forEach(::ensureResolved)
-        ensureResolved(designation.declaration)
-        ensureResolvedDeep(designation.declaration)
+        //designation.path.forEach(::ensureResolved)
+        //ensureResolved(designation.declaration)
+        //ensureResolvedDeep(designation.declaration)
     }
 
     override fun ensureResolved(declaration: FirDeclaration) {
