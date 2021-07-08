@@ -1599,6 +1599,26 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.UNION_TYPE_PROHIBITED_POSITION) { firDiagnostic ->
+        UnionTypeProhibitedPositionImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.FUNCTION_TYPE_IN_UNION_TYPE) { firDiagnostic ->
+        FunctionTypeInUnionTypeImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.SUBTYPE_IN_UNION_TYPE) { firDiagnostic ->
+        SubtypeInUnionTypeImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.EXTENSION_IN_CLASS_REFERENCE_NOT_ALLOWED) { firDiagnostic ->
         ExtensionInClassReferenceNotAllowedImpl(
             firSymbolBuilder.callableBuilder.buildCallableSymbol(firDiagnostic.a.fir),

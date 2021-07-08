@@ -1825,6 +1825,29 @@ internal class SmartcastImpossibleImpl(
     override val firDiagnostic: FirPsiDiagnostic by weakRef(firDiagnostic)
 }
 
+internal class UnionTypeProhibitedPositionImpl(
+    firDiagnostic: FirPsiDiagnostic,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.UnionTypeProhibitedPosition(), KtAbstractFirDiagnostic<KtTypeReference> {
+    override val firDiagnostic: FirPsiDiagnostic by weakRef(firDiagnostic)
+}
+
+internal class FunctionTypeInUnionTypeImpl(
+    firDiagnostic: FirPsiDiagnostic,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.FunctionTypeInUnionType(), KtAbstractFirDiagnostic<KtTypeReference> {
+    override val firDiagnostic: FirPsiDiagnostic by weakRef(firDiagnostic)
+}
+
+internal class SubtypeInUnionTypeImpl(
+    override val subType: KtType,
+    override val superType: KtType,
+    firDiagnostic: FirPsiDiagnostic,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.SubtypeInUnionType(), KtAbstractFirDiagnostic<KtTypeReference> {
+    override val firDiagnostic: FirPsiDiagnostic by weakRef(firDiagnostic)
+}
+
 internal class ExtensionInClassReferenceNotAllowedImpl(
     override val referencedDeclaration: KtCallableSymbol,
     firDiagnostic: FirPsiDiagnostic,

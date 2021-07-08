@@ -1137,6 +1137,20 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         abstract val description: String
     }
 
+    abstract class UnionTypeProhibitedPosition : KtFirDiagnostic<KtTypeReference>() {
+        override val diagnosticClass get() = UnionTypeProhibitedPosition::class
+    }
+
+    abstract class FunctionTypeInUnionType : KtFirDiagnostic<KtTypeReference>() {
+        override val diagnosticClass get() = FunctionTypeInUnionType::class
+    }
+
+    abstract class SubtypeInUnionType : KtFirDiagnostic<KtTypeReference>() {
+        override val diagnosticClass get() = SubtypeInUnionType::class
+        abstract val subType: KtType
+        abstract val superType: KtType
+    }
+
     abstract class ExtensionInClassReferenceNotAllowed : KtFirDiagnostic<KtExpression>() {
         override val diagnosticClass get() = ExtensionInClassReferenceNotAllowed::class
         abstract val referencedDeclaration: KtCallableSymbol

@@ -557,6 +557,15 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<FirExpression>("subject")
             parameter<String>("description")
         }
+
+        val UNION_TYPE_PROHIBITED_POSITION by error<KtTypeReference>()
+
+        val FUNCTION_TYPE_IN_UNION_TYPE by error<KtTypeReference>()
+
+        val SUBTYPE_IN_UNION_TYPE by error<KtTypeReference> {
+            parameter<ConeKotlinType>("subType")
+            parameter<ConeKotlinType>("superType")
+        }
     }
 
     val REFLECTION by object : DiagnosticGroup("Reflection") {

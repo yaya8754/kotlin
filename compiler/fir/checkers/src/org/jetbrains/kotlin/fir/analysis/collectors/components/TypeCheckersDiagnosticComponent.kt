@@ -54,6 +54,10 @@ class TypeCheckersDiagnosticComponent(
         checkers.allTypeRefCheckers.check(typeRef, data, reporter)
     }
 
+    override fun visitUnionTypeRef(unionTypeRef: FirUnionTypeRef, data: CheckerContext) {
+        checkers.allTypeRefCheckers.check(unionTypeRef, data, reporter)
+    }
+
     private fun <T : FirTypeRef> Collection<FirTypeChecker<T>>.check(
         typeRef: T,
         context: CheckerContext,

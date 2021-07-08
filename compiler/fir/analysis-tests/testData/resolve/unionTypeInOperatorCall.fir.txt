@@ -1,0 +1,17 @@
+FILE: unionTypeInOperatorCall.kt
+    public final typealias BF = R|it(kotlin/Boolean | kotlin/Float)|
+    public final fun foo(): R|kotlin/Unit| {
+        lvar x: R|kotlin/Any| = R|kotlin/Any.Any|()
+        when () {
+            (R|<local>/x| is R|it(kotlin/Int | kotlin/String)|) ->  {
+            }
+        }
+
+        when (R|<local>/x|) {
+            ($subj$ !is R|it(kotlin/Int | kotlin/String)|) ->  {
+                R|kotlin/TODO|()
+            }
+        }
+
+        (R|<local>/x| as R|BF|)
+    }

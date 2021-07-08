@@ -1,0 +1,10 @@
+FILE: nestedTypesInUnionType.kt
+    public final fun foo(): R|kotlin/Unit| {
+        lval x: R|it(kotlin/Any | kotlin/Int | kotlin/String)| = Int(5)
+        try {
+        }
+        catch (e: R|it(kotlin/RuntimeException | kotlin/NullPointerException)|) {
+        }
+
+        lval y: R|it(kotlin/Boolean | kotlin/Function1<kotlin/Int, kotlin/Boolean>)| = Boolean(true)
+    }

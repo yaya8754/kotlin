@@ -341,6 +341,9 @@ object FirErrors {
     val TYPE_VARIANCE_CONFLICT by error4<PsiElement, FirTypeParameterSymbol, Variance, Variance, ConeKotlinType>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE_OR_DEFAULT)
     val TYPE_VARIANCE_CONFLICT_IN_EXPANDED_TYPE by error4<PsiElement, FirTypeParameterSymbol, Variance, Variance, ConeKotlinType>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE_OR_DEFAULT)
     val SMARTCAST_IMPOSSIBLE by error3<KtExpression, ConeKotlinType, FirExpression, String>()
+    val UNION_TYPE_PROHIBITED_POSITION by error0<KtTypeReference>()
+    val FUNCTION_TYPE_IN_UNION_TYPE by error0<KtTypeReference>()
+    val SUBTYPE_IN_UNION_TYPE by error2<KtTypeReference, ConeKotlinType, ConeKotlinType>()
 
     // Reflection
     val EXTENSION_IN_CLASS_REFERENCE_NOT_ALLOWED by error1<KtExpression, FirCallableSymbol<*>>(SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED)
