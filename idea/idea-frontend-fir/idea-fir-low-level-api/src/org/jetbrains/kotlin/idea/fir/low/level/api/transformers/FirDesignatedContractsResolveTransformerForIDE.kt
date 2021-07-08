@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.fir.resolve.transformers.contracts.FirContractResolv
 import org.jetbrains.kotlin.idea.fir.low.level.api.FirPhaseRunner
 import org.jetbrains.kotlin.idea.fir.low.level.api.api.FirDeclarationDesignationWithFile
 import org.jetbrains.kotlin.idea.fir.low.level.api.lazy.resolve.FirLazyBodiesCalculator
-import org.jetbrains.kotlin.idea.fir.low.level.api.transformers.FirLazyTransformerForIDE.Companion.isResolvedForAllDeclarations
+import org.jetbrains.kotlin.idea.fir.low.level.api.transformers.FirLazyTransformerForIDE.Companion.updatePhaseDeep
 import org.jetbrains.kotlin.idea.fir.low.level.api.util.ensurePhase
 
 /**
@@ -24,7 +24,6 @@ internal class FirDesignatedContractsResolveTransformerForIDE(
     private val designation: FirDeclarationDesignationWithFile,
     session: FirSession,
     scopeSession: ScopeSession,
-    private val declarationPhaseDowngraded: Boolean,
 ) : FirLazyTransformerForIDE, FirContractResolveTransformer(session, scopeSession) {
 
     private val ideDeclarationTransformer = IDEDeclarationTransformer(designation)
@@ -47,9 +46,8 @@ internal class FirDesignatedContractsResolveTransformerForIDE(
         ideDeclarationTransformer.needReplacePhase && firDeclaration !is FirFile && super.needReplacePhase(firDeclaration)
 
     override fun transformDeclaration(phaseRunner: FirPhaseRunner) {
-        if (designation.isResolvedForAllDeclarations(FirResolvePhase.CONTRACTS, declarationPhaseDowngraded)) return
-        check(designation.isResolvedForAllDeclarations(FirResolvePhase.STATUS, declarationPhaseDowngraded))
-        designation.declaration.replaceResolvePhase(FirResolvePhase.CONTRACTS)
+        if (designation.declaration.resolvePhase >= FirResolvePhase.CONTRACTS) return
+        designation.declaration.ensurePhase(FirResolvePhase.STATUS)
 
 //        if (designation.isResolvedForAllDeclarations(FirResolvePhase.CONTRACTS, declarationPhaseDowngraded)) return
 //        designation.declaration.updateResolvedPhaseForDeclarationAndChildren(FirResolvePhase.CONTRACTS)
@@ -62,9 +60,9 @@ internal class FirDesignatedContractsResolveTransformerForIDE(
         }
 
         ideDeclarationTransformer.ensureDesignationPassed()
-//        designation.declaration.replaceResolvePhase(FirResolvePhase.CONTRACTS)
-//        ensureResolved(designation.declaration)
-//        ensureResolvedDeep(designation.declaration)
+        updatePhaseDeep(designation.declaration, FirResolvePhase.CONTRACTS)
+        ensureResolved(designation.declaration)
+        ensureResolvedDeep(designation.declaration)
     }
 
     override fun ensureResolved(declaration: FirDeclaration) {

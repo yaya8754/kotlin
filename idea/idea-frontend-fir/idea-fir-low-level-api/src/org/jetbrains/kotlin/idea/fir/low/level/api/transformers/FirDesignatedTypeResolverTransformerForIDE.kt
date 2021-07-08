@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.fir.types.FirImplicitTypeRef
 import org.jetbrains.kotlin.fir.types.FirResolvedTypeRef
 import org.jetbrains.kotlin.idea.fir.low.level.api.FirPhaseRunner
 import org.jetbrains.kotlin.idea.fir.low.level.api.api.FirDeclarationDesignationWithFile
-import org.jetbrains.kotlin.idea.fir.low.level.api.transformers.FirLazyTransformerForIDE.Companion.isResolvedForAllDeclarations
+import org.jetbrains.kotlin.idea.fir.low.level.api.transformers.FirLazyTransformerForIDE.Companion.updatePhaseDeep
 import org.jetbrains.kotlin.idea.fir.low.level.api.util.ensurePhase
 
 /**
@@ -24,7 +24,6 @@ internal class FirDesignatedTypeResolverTransformerForIDE(
     private val designation: FirDeclarationDesignationWithFile,
     session: FirSession,
     scopeSession: ScopeSession,
-    private val declarationPhaseDowngraded: Boolean,
 ) : FirLazyTransformerForIDE, FirTypeResolveTransformer(session, scopeSession) {
 
     private val declarationTransformer = IDEDeclarationTransformer(designation)
@@ -36,29 +35,24 @@ internal class FirDesignatedTypeResolverTransformerForIDE(
                 super.transformElement(element, data)
             } as E
         } else {
-            if (element is FirDeclaration) {
-                if (element.resolvePhase < FirResolvePhase.TYPES) {
-                    element.replaceResolvePhase(FirResolvePhase.TYPES)
-                }
-            }
             super.transformElement(element, data)
         }
     }
 
     override fun transformDeclaration(phaseRunner: FirPhaseRunner) {
-        if (designation.isResolvedForAllDeclarations(FirResolvePhase.TYPES, declarationPhaseDowngraded)) return
-        check(designation.isResolvedForAllDeclarations(FirResolvePhase.SUPER_TYPES, declarationPhaseDowngraded))
-        designation.declaration.replaceResolvePhase(FirResolvePhase.TYPES)
+        if (designation.declaration.resolvePhase >= FirResolvePhase.TYPES) return
+        designation.declaration.ensurePhase(FirResolvePhase.SUPER_TYPES)
 
         phaseRunner.runPhaseWithCustomResolve(FirResolvePhase.TYPES) {
             designation.firFile.transform<FirFile, Any?>(this, null)
         }
 
         declarationTransformer.ensureDesignationPassed()
+        updatePhaseDeep(designation.declaration, FirResolvePhase.TYPES)
 
 //        designation.path.forEach(::ensureResolved)
-//        ensureResolved(designation.declaration)
-//        ensureResolvedDeep(designation.declaration)
+        ensureResolved(designation.declaration)
+        ensureResolvedDeep(designation.declaration)
     }
 
     override fun ensureResolved(declaration: FirDeclaration) {

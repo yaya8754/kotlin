@@ -17,8 +17,8 @@ import org.jetbrains.kotlin.fir.types.FirResolvedTypeRef
 import org.jetbrains.kotlin.idea.fir.low.level.api.FirPhaseRunner
 import org.jetbrains.kotlin.idea.fir.low.level.api.api.FirDeclarationDesignationWithFile
 import org.jetbrains.kotlin.idea.fir.low.level.api.element.builder.FirIdeDesignatedBodyResolveTransformerForReturnTypeCalculator
-import org.jetbrains.kotlin.idea.fir.low.level.api.transformers.FirLazyTransformerForIDE.Companion.isResolvedForAllDeclarations
-import org.jetbrains.kotlin.idea.fir.low.level.api.util.ensurePhaseForClasses
+import org.jetbrains.kotlin.idea.fir.low.level.api.transformers.FirLazyTransformerForIDE.Companion.updatePhaseDeep
+import org.jetbrains.kotlin.idea.fir.low.level.api.util.ensurePhase
 
 /**
  * Transform designation into IMPLICIT_TYPES_BODY_RESOLVE declaration. Affects only for target declaration, it's children and dependents
@@ -27,7 +27,6 @@ internal class FirDesignatedImplicitTypesTransformerForIDE(
     private val designation: FirDeclarationDesignationWithFile,
     session: FirSession,
     scopeSession: ScopeSession,
-    private val declarationPhaseDowngraded: Boolean,
     towerDataContextCollector: FirTowerDataContextCollector?,
     implicitBodyResolveComputationSession: ImplicitBodyResolveComputationSession = ImplicitBodyResolveComputationSession(),
 ) : FirLazyTransformerForIDE, FirImplicitAwareBodyResolveTransformer(
@@ -55,9 +54,8 @@ internal class FirDesignatedImplicitTypesTransformerForIDE(
         ideDeclarationTransformer.needReplacePhase && firDeclaration !is FirFile && super.needReplacePhase(firDeclaration)
 
     override fun transformDeclaration(phaseRunner: FirPhaseRunner) {
-        if (designation.isResolvedForAllDeclarations(FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE, declarationPhaseDowngraded)) return
-        check(designation.isResolvedForAllDeclarations(FirResolvePhase.CONTRACTS, declarationPhaseDowngraded))
-        designation.declaration.replaceResolvePhase(FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE)
+        if (designation.declaration.resolvePhase >= FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE) return
+        designation.declaration.ensurePhase(FirResolvePhase.CONTRACTS)
 
 //        if (designation.isResolvedForAllDeclarations(FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE, declarationPhaseDowngraded)) return
 //        designation.declaration.updateResolvedPhaseForDeclarationAndChildren(FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE)
@@ -75,9 +73,9 @@ internal class FirDesignatedImplicitTypesTransformerForIDE(
         }
 
         ideDeclarationTransformer.ensureDesignationPassed()
-//        designation.declaration.replaceResolvePhase(FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE)
-//        ensureResolved(designation.declaration)
-//        ensureResolvedDeep(designation.declaration)
+        updatePhaseDeep(designation.declaration, FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE)
+        ensureResolved(designation.declaration)
+        ensureResolvedDeep(designation.declaration)
     }
 
     override fun ensureResolved(declaration: FirDeclaration) {

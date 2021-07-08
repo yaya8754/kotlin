@@ -145,7 +145,6 @@ internal class ReanalyzableFunctionStructureElement(
                 scopeSession = ScopeSession(),
                 toPhase = FirResolvePhase.BODY_RESOLVE,
                 checkPCE = true,
-                declarationPhaseDowngraded = true,
             )
 
             ReanalyzableFunctionStructureElement(
@@ -205,7 +204,6 @@ internal class ReanalyzablePropertyStructureElement(
                 scopeSession = ScopeSession(),
                 toPhase = FirResolvePhase.BODY_RESOLVE,
                 checkPCE = true,
-                declarationPhaseDowngraded = true,
             )
 
             ReanalyzablePropertyStructureElement(
