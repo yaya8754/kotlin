@@ -391,7 +391,11 @@ void CallInitGlobalPossiblyLock(int volatile* state, void (*init)(bool)) {
     }
     if (compareAndSwap(state, FILE_NOT_INITIALIZED, FILE_BEING_INITIALIZED | (threadId << 2)) == FILE_NOT_INITIALIZED) {
         // actual initialization
-        init(threadId == mainThreadId);
+        try {
+            init(threadId == mainThreadId);
+        } catch (...) {
+            *state = FILE_INITIALIZED;
+        }
         *state = FILE_INITIALIZED;
     } else {
         do {

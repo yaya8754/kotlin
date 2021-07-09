@@ -2311,6 +2311,8 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
         val bbExit = basicBlock("label_continue", null)
         val globalState = load(globalStatePtr)
         LLVMSetVolatile(globalState, 1)
+        // Make sure we're not in the middle of global initializer invocation -
+        // thread locals can be initialized only after all shared globals have been initialized.
         condBr(icmpNe(globalState, Int32(FILE_INITIALIZED).llvm), bbExit, bbCheckLocalState)
         positionAtEnd(bbCheckLocalState)
         condBr(icmpEq(load(localStatePtr), Int32(FILE_NOT_INITIALIZED).llvm), bbInit, bbExit)
