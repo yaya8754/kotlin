@@ -382,7 +382,7 @@ void CallInitGlobalPossiblyLock(int volatile* state, void (*init)(bool)) {
     if (localState == FILE_INITIALIZED) return;
     int threadId = konan::currentThreadId();
     if ((localState & 3) == FILE_BEING_INITIALIZED) {
-        if ((localState >> 2) != threadId) {
+        if ((localState & ~3) != (threadId << 2)) {
             do {
                 localState = *state;
             } while (localState != FILE_INITIALIZED);
