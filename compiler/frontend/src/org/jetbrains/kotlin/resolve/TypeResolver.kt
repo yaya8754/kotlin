@@ -412,7 +412,11 @@ class TypeResolver(
             }
 
             override fun visitKtElement(element: KtElement) {
-                c.trace.report(UNSUPPORTED.on(element, "Self-types are not supported yet"))
+                if (element is KtUnionType) {
+                    c.trace.report(UNSUPPORTED.on(element, "Union types are available only when FIR is enabled (-Xuse-fir)"))
+                } else {
+                    c.trace.report(UNSUPPORTED.on(element, "Self-types are not supported yet"))
+                }
             }
 
             private fun checkParameterInFunctionType(param: KtParameter) {
