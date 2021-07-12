@@ -36,6 +36,7 @@
 namespace kotlin {
 namespace internal {
 
+void RuntimeAssertFailedLog(const char* location, const char* format, ...) __attribute__((format(printf, 2, 3)));
 RUNTIME_NORETURN void RuntimeAssertFailedPanic(const char* location, const char* format, ...) __attribute__((format(printf, 2, 3)));
 
 inline RUNTIME_NORETURN void TODOImpl(const char* location) {
@@ -54,10 +55,18 @@ inline RUNTIME_NORETURN void TODOImpl(const char* location, const char* message)
 // Use RuntimeAssert() in internal state checks, which could be ignored in production.
 #define RuntimeAssert(condition, format, ...) \
     do { \
-        if (::kotlin::compiler::shouldContainDebugInfo()) { \
-            if (!(condition)) { \
-                ::kotlin::internal::RuntimeAssertFailedPanic(CURRENT_SOURCE_LOCATION, format, ##__VA_ARGS__); \
-            } \
+        switch (::kotlin::compiler::runtimeAssertsMode()) { \
+            case ::kotlin::compiler::RuntimeAssertsMode::kIgnore: break; \
+            case ::kotlin::compiler::RuntimeAssertsMode::kLog: \
+                if (!(condition)) { \
+                    ::kotlin::internal::RuntimeAssertFailedLog(CURRENT_SOURCE_LOCATION, format, ##__VA_ARGS__); \
+                } \
+                break; \
+            case ::kotlin::compiler::RuntimeAssertsMode::kPanic: \
+                if (!(condition)) { \
+                    ::kotlin::internal::RuntimeAssertFailedPanic(CURRENT_SOURCE_LOCATION, format, ##__VA_ARGS__); \
+                } \
+                break; \
         } \
     } while (false)
 #else
@@ -68,7 +77,7 @@ inline RUNTIME_NORETURN void TODOImpl(const char* location, const char* message)
 
 // Use RuntimeCheck() in runtime checks that could fail due to external condition and shall lead
 // to program termination. Never compiled out.
-// TODO: Consider using `CURRENT_SOURCE_LOCATION` when `kotlin::compiler::shouldContainDebugInfo()` is `true`.
+// TODO: Consider using `CURRENT_SOURCE_LOCATION` when `kotlin::compiler::runtimeAssertsMode()` is not `kIgnore`.
 #define RuntimeCheck(condition, format, ...) \
     do { \
         if (!(condition)) { \
@@ -82,7 +91,7 @@ inline RUNTIME_NORETURN void TODOImpl(const char* location, const char* message)
     } while (false)
 
 // Use RuntimeFail() to unconditionally fail, signifying compiler/runtime bug.
-// TODO: Consider using `CURRENT_SOURCE_LOCATION` when `kotlin::compiler::shouldContainDebugInfo()` is `true`.
+// TODO: Consider using `CURRENT_SOURCE_LOCATION` when `kotlin::compiler::runtimeAssertsMode()` is not `kIgnore`.
 #define RuntimeFail(format, ...) \
     do { \
         ::kotlin::internal::RuntimeAssertFailedPanic(nullptr, format, ##__VA_ARGS__); \

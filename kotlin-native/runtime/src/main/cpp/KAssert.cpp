@@ -40,6 +40,13 @@ void PrintAssert(const char* location, const char* format, std::va_list args) no
 
 } // namespace
 
+void internal::RuntimeAssertFailedLog(const char* location, const char* format, ...) {
+    std::va_list args;
+    va_start(args, format);
+    PrintAssert(location, format, args);
+    va_end(args);
+}
+
 RUNTIME_NORETURN void internal::RuntimeAssertFailedPanic(const char* location, const char* format, ...) {
     std::va_list args;
     va_start(args, format);
