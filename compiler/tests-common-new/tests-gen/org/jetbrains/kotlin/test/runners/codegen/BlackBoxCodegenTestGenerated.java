@@ -6820,6 +6820,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
             public void testLibraryProperty() throws Exception {
                 runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/fir/LibraryProperty.kt");
             }
+
+            @Test
+            @TestMetadata("UnionTypes.kt")
+            public void testUnionTypes() throws Exception {
+                runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/fir/UnionTypes.kt");
+            }
         }
 
         @Nested

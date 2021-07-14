@@ -4504,6 +4504,11 @@ public class IrJsCodegenBoxES6TestGenerated extends AbstractIrJsCodegenBoxES6Tes
             public void testAllFilesPresentInFir() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/compileKotlinAgainstKotlin/fir"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS_IR_ES6, true);
             }
+
+            @TestMetadata("UnionTypes.kt")
+            public void testUnionTypes() throws Exception {
+                runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/fir/UnionTypes.kt");
+            }
         }
 
         @TestMetadata("compiler/testData/codegen/box/compileKotlinAgainstKotlin/inlineClasses")

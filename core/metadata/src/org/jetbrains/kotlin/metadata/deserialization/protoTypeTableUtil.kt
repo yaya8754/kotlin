@@ -113,3 +113,6 @@ fun ProtoBuf.Expression.isInstanceType(typeTable: TypeTable): ProtoBuf.Type? = w
     hasIsInstanceTypeId() -> typeTable[isInstanceTypeId]
     else -> null
 }
+
+fun ProtoBuf.Type.heldTypes(typeTable: TypeTable): List<ProtoBuf.Type> =
+    heldTypeList.takeIf(Collection<*>::isNotEmpty) ?: heldTypeIdList.map { typeTable[it] }

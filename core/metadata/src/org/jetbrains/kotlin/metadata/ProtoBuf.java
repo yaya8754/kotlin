@@ -4783,6 +4783,42 @@ public final class ProtoBuf {
     int getAbbreviatedTypeId();
 
     /**
+     * <code>optional .org.jetbrains.kotlin.metadata.Type.TypesHolder types_holder = 15 [default = NOT_HOLDER];</code>
+     */
+    boolean hasTypesHolder();
+    /**
+     * <code>optional .org.jetbrains.kotlin.metadata.Type.TypesHolder types_holder = 15 [default = NOT_HOLDER];</code>
+     */
+    org.jetbrains.kotlin.metadata.ProtoBuf.Type.TypesHolder getTypesHolder();
+
+    /**
+     * <code>repeated .org.jetbrains.kotlin.metadata.Type held_type = 16;</code>
+     */
+    java.util.List<org.jetbrains.kotlin.metadata.ProtoBuf.Type> 
+        getHeldTypeList();
+    /**
+     * <code>repeated .org.jetbrains.kotlin.metadata.Type held_type = 16;</code>
+     */
+    org.jetbrains.kotlin.metadata.ProtoBuf.Type getHeldType(int index);
+    /**
+     * <code>repeated .org.jetbrains.kotlin.metadata.Type held_type = 16;</code>
+     */
+    int getHeldTypeCount();
+
+    /**
+     * <code>repeated int32 held_type_id = 17 [packed = true];</code>
+     */
+    java.util.List<java.lang.Integer> getHeldTypeIdList();
+    /**
+     * <code>repeated int32 held_type_id = 17 [packed = true];</code>
+     */
+    int getHeldTypeIdCount();
+    /**
+     * <code>repeated int32 held_type_id = 17 [packed = true];</code>
+     */
+    int getHeldTypeId(int index);
+
+    /**
      * <code>optional int32 flags = 1;</code>
      *
      * <pre>
@@ -4851,7 +4887,7 @@ public final class ProtoBuf {
               break;
             }
             case 8: {
-              bitField0_ |= 0x00001000;
+              bitField0_ |= 0x00002000;
               flags_ = input.readInt32();
               break;
             }
@@ -4947,6 +4983,47 @@ public final class ProtoBuf {
               abbreviatedTypeId_ = input.readInt32();
               break;
             }
+            case 120: {
+              int rawValue = input.readEnum();
+              org.jetbrains.kotlin.metadata.ProtoBuf.Type.TypesHolder value = org.jetbrains.kotlin.metadata.ProtoBuf.Type.TypesHolder.valueOf(rawValue);
+              if (value == null) {
+                unknownFieldsCodedOutput.writeRawVarint32(tag);
+                unknownFieldsCodedOutput.writeRawVarint32(rawValue);
+              } else {
+                bitField0_ |= 0x00001000;
+                typesHolder_ = value;
+              }
+              break;
+            }
+            case 130: {
+              if (!((mutable_bitField0_ & 0x00004000) == 0x00004000)) {
+                heldType_ = new java.util.ArrayList<org.jetbrains.kotlin.metadata.ProtoBuf.Type>();
+                mutable_bitField0_ |= 0x00004000;
+              }
+              heldType_.add(input.readMessage(org.jetbrains.kotlin.metadata.ProtoBuf.Type.PARSER, extensionRegistry));
+              break;
+            }
+            case 136: {
+              if (!((mutable_bitField0_ & 0x00008000) == 0x00008000)) {
+                heldTypeId_ = new java.util.ArrayList<java.lang.Integer>();
+                mutable_bitField0_ |= 0x00008000;
+              }
+              heldTypeId_.add(input.readInt32());
+              break;
+            }
+            case 138: {
+              int length = input.readRawVarint32();
+              int limit = input.pushLimit(length);
+              if (!((mutable_bitField0_ & 0x00008000) == 0x00008000) && input.getBytesUntilLimit() > 0) {
+                heldTypeId_ = new java.util.ArrayList<java.lang.Integer>();
+                mutable_bitField0_ |= 0x00008000;
+              }
+              while (input.getBytesUntilLimit() > 0) {
+                heldTypeId_.add(input.readInt32());
+              }
+              input.popLimit(limit);
+              break;
+            }
           }
         }
       } catch (org.jetbrains.kotlin.protobuf.InvalidProtocolBufferException e) {
@@ -4957,6 +5034,12 @@ public final class ProtoBuf {
       } finally {
         if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
           argument_ = java.util.Collections.unmodifiableList(argument_);
+        }
+        if (((mutable_bitField0_ & 0x00004000) == 0x00004000)) {
+          heldType_ = java.util.Collections.unmodifiableList(heldType_);
+        }
+        if (((mutable_bitField0_ & 0x00008000) == 0x00008000)) {
+          heldTypeId_ = java.util.Collections.unmodifiableList(heldTypeId_);
         }
         try {
           unknownFieldsCodedOutput.flush();
@@ -4981,6 +5064,62 @@ public final class ProtoBuf {
     @java.lang.Override
     public org.jetbrains.kotlin.protobuf.Parser<Type> getParserForType() {
       return PARSER;
+    }
+
+    /**
+     * Protobuf enum {@code org.jetbrains.kotlin.metadata.Type.TypesHolder}
+     */
+    public enum TypesHolder
+        implements org.jetbrains.kotlin.protobuf.Internal.EnumLite {
+      /**
+       * <code>NOT_HOLDER = 0;</code>
+       */
+      NOT_HOLDER(0, 0),
+      /**
+       * <code>UNION_TYPE = 1;</code>
+       */
+      UNION_TYPE(1, 1),
+      ;
+
+      /**
+       * <code>NOT_HOLDER = 0;</code>
+       */
+      public static final int NOT_HOLDER_VALUE = 0;
+      /**
+       * <code>UNION_TYPE = 1;</code>
+       */
+      public static final int UNION_TYPE_VALUE = 1;
+
+
+      public final int getNumber() { return value; }
+
+      public static TypesHolder valueOf(int value) {
+        switch (value) {
+          case 0: return NOT_HOLDER;
+          case 1: return UNION_TYPE;
+          default: return null;
+        }
+      }
+
+      public static org.jetbrains.kotlin.protobuf.Internal.EnumLiteMap<TypesHolder>
+          internalGetValueMap() {
+        return internalValueMap;
+      }
+      private static org.jetbrains.kotlin.protobuf.Internal.EnumLiteMap<TypesHolder>
+          internalValueMap =
+            new org.jetbrains.kotlin.protobuf.Internal.EnumLiteMap<TypesHolder>() {
+              public TypesHolder findValueByNumber(int number) {
+                return TypesHolder.valueOf(number);
+              }
+            };
+
+      private final int value;
+
+      private TypesHolder(int index, int value) {
+        this.value = value;
+      }
+
+      // @@protoc_insertion_point(enum_scope:org.jetbrains.kotlin.metadata.Type.TypesHolder)
     }
 
     public interface ArgumentOrBuilder extends
@@ -5923,6 +6062,79 @@ public final class ProtoBuf {
       return abbreviatedTypeId_;
     }
 
+    public static final int TYPES_HOLDER_FIELD_NUMBER = 15;
+    private org.jetbrains.kotlin.metadata.ProtoBuf.Type.TypesHolder typesHolder_;
+    /**
+     * <code>optional .org.jetbrains.kotlin.metadata.Type.TypesHolder types_holder = 15 [default = NOT_HOLDER];</code>
+     */
+    public boolean hasTypesHolder() {
+      return ((bitField0_ & 0x00001000) == 0x00001000);
+    }
+    /**
+     * <code>optional .org.jetbrains.kotlin.metadata.Type.TypesHolder types_holder = 15 [default = NOT_HOLDER];</code>
+     */
+    public org.jetbrains.kotlin.metadata.ProtoBuf.Type.TypesHolder getTypesHolder() {
+      return typesHolder_;
+    }
+
+    public static final int HELD_TYPE_FIELD_NUMBER = 16;
+    private java.util.List<org.jetbrains.kotlin.metadata.ProtoBuf.Type> heldType_;
+    /**
+     * <code>repeated .org.jetbrains.kotlin.metadata.Type held_type = 16;</code>
+     */
+    public java.util.List<org.jetbrains.kotlin.metadata.ProtoBuf.Type> getHeldTypeList() {
+      return heldType_;
+    }
+    /**
+     * <code>repeated .org.jetbrains.kotlin.metadata.Type held_type = 16;</code>
+     */
+    public java.util.List<? extends org.jetbrains.kotlin.metadata.ProtoBuf.TypeOrBuilder> 
+        getHeldTypeOrBuilderList() {
+      return heldType_;
+    }
+    /**
+     * <code>repeated .org.jetbrains.kotlin.metadata.Type held_type = 16;</code>
+     */
+    public int getHeldTypeCount() {
+      return heldType_.size();
+    }
+    /**
+     * <code>repeated .org.jetbrains.kotlin.metadata.Type held_type = 16;</code>
+     */
+    public org.jetbrains.kotlin.metadata.ProtoBuf.Type getHeldType(int index) {
+      return heldType_.get(index);
+    }
+    /**
+     * <code>repeated .org.jetbrains.kotlin.metadata.Type held_type = 16;</code>
+     */
+    public org.jetbrains.kotlin.metadata.ProtoBuf.TypeOrBuilder getHeldTypeOrBuilder(
+        int index) {
+      return heldType_.get(index);
+    }
+
+    public static final int HELD_TYPE_ID_FIELD_NUMBER = 17;
+    private java.util.List<java.lang.Integer> heldTypeId_;
+    /**
+     * <code>repeated int32 held_type_id = 17 [packed = true];</code>
+     */
+    public java.util.List<java.lang.Integer>
+        getHeldTypeIdList() {
+      return heldTypeId_;
+    }
+    /**
+     * <code>repeated int32 held_type_id = 17 [packed = true];</code>
+     */
+    public int getHeldTypeIdCount() {
+      return heldTypeId_.size();
+    }
+    /**
+     * <code>repeated int32 held_type_id = 17 [packed = true];</code>
+     */
+    public int getHeldTypeId(int index) {
+      return heldTypeId_.get(index);
+    }
+    private int heldTypeIdMemoizedSerializedSize = -1;
+
     public static final int FLAGS_FIELD_NUMBER = 1;
     private int flags_;
     /**
@@ -5933,7 +6145,7 @@ public final class ProtoBuf {
      * </pre>
      */
     public boolean hasFlags() {
-      return ((bitField0_ & 0x00001000) == 0x00001000);
+      return ((bitField0_ & 0x00002000) == 0x00002000);
     }
     /**
      * <code>optional int32 flags = 1;</code>
@@ -5960,6 +6172,9 @@ public final class ProtoBuf {
       outerTypeId_ = 0;
       abbreviatedType_ = org.jetbrains.kotlin.metadata.ProtoBuf.Type.getDefaultInstance();
       abbreviatedTypeId_ = 0;
+      typesHolder_ = org.jetbrains.kotlin.metadata.ProtoBuf.Type.TypesHolder.NOT_HOLDER;
+      heldType_ = java.util.Collections.emptyList();
+      heldTypeId_ = java.util.Collections.emptyList();
       flags_ = 0;
     }
     private byte memoizedIsInitialized = -1;
@@ -5992,6 +6207,12 @@ public final class ProtoBuf {
           return false;
         }
       }
+      for (int i = 0; i < getHeldTypeCount(); i++) {
+        if (!getHeldType(i).isInitialized()) {
+          memoizedIsInitialized = 0;
+          return false;
+        }
+      }
       if (!extensionsAreInitialized()) {
         memoizedIsInitialized = 0;
         return false;
@@ -6006,7 +6227,7 @@ public final class ProtoBuf {
       org.jetbrains.kotlin.protobuf.GeneratedMessageLite
         .ExtendableMessage<org.jetbrains.kotlin.metadata.ProtoBuf.Type>.ExtensionWriter extensionWriter =
           newExtensionWriter();
-      if (((bitField0_ & 0x00001000) == 0x00001000)) {
+      if (((bitField0_ & 0x00002000) == 0x00002000)) {
         output.writeInt32(1, flags_);
       }
       for (int i = 0; i < argument_.size(); i++) {
@@ -6048,6 +6269,19 @@ public final class ProtoBuf {
       if (((bitField0_ & 0x00000800) == 0x00000800)) {
         output.writeInt32(14, abbreviatedTypeId_);
       }
+      if (((bitField0_ & 0x00001000) == 0x00001000)) {
+        output.writeEnum(15, typesHolder_.getNumber());
+      }
+      for (int i = 0; i < heldType_.size(); i++) {
+        output.writeMessage(16, heldType_.get(i));
+      }
+      if (getHeldTypeIdList().size() > 0) {
+        output.writeRawVarint32(138);
+        output.writeRawVarint32(heldTypeIdMemoizedSerializedSize);
+      }
+      for (int i = 0; i < heldTypeId_.size(); i++) {
+        output.writeInt32NoTag(heldTypeId_.get(i));
+      }
       extensionWriter.writeUntil(200, output);
       output.writeRawBytes(unknownFields);
     }
@@ -6058,7 +6292,7 @@ public final class ProtoBuf {
       if (size != -1) return size;
 
       size = 0;
-      if (((bitField0_ & 0x00001000) == 0x00001000)) {
+      if (((bitField0_ & 0x00002000) == 0x00002000)) {
         size += org.jetbrains.kotlin.protobuf.CodedOutputStream
           .computeInt32Size(1, flags_);
       }
@@ -6113,6 +6347,28 @@ public final class ProtoBuf {
       if (((bitField0_ & 0x00000800) == 0x00000800)) {
         size += org.jetbrains.kotlin.protobuf.CodedOutputStream
           .computeInt32Size(14, abbreviatedTypeId_);
+      }
+      if (((bitField0_ & 0x00001000) == 0x00001000)) {
+        size += org.jetbrains.kotlin.protobuf.CodedOutputStream
+          .computeEnumSize(15, typesHolder_.getNumber());
+      }
+      for (int i = 0; i < heldType_.size(); i++) {
+        size += org.jetbrains.kotlin.protobuf.CodedOutputStream
+          .computeMessageSize(16, heldType_.get(i));
+      }
+      {
+        int dataSize = 0;
+        for (int i = 0; i < heldTypeId_.size(); i++) {
+          dataSize += org.jetbrains.kotlin.protobuf.CodedOutputStream
+            .computeInt32SizeNoTag(heldTypeId_.get(i));
+        }
+        size += dataSize;
+        if (!getHeldTypeIdList().isEmpty()) {
+          size += 2;
+          size += org.jetbrains.kotlin.protobuf.CodedOutputStream
+              .computeInt32SizeNoTag(dataSize);
+        }
+        heldTypeIdMemoizedSerializedSize = dataSize;
       }
       size += extensionsSerializedSize();
       size += unknownFields.size();
@@ -6234,8 +6490,14 @@ public final class ProtoBuf {
         bitField0_ = (bitField0_ & ~0x00000800);
         abbreviatedTypeId_ = 0;
         bitField0_ = (bitField0_ & ~0x00001000);
-        flags_ = 0;
+        typesHolder_ = org.jetbrains.kotlin.metadata.ProtoBuf.Type.TypesHolder.NOT_HOLDER;
         bitField0_ = (bitField0_ & ~0x00002000);
+        heldType_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00004000);
+        heldTypeId_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00008000);
+        flags_ = 0;
+        bitField0_ = (bitField0_ & ~0x00010000);
         return this;
       }
 
@@ -6315,6 +6577,20 @@ public final class ProtoBuf {
         if (((from_bitField0_ & 0x00002000) == 0x00002000)) {
           to_bitField0_ |= 0x00001000;
         }
+        result.typesHolder_ = typesHolder_;
+        if (((bitField0_ & 0x00004000) == 0x00004000)) {
+          heldType_ = java.util.Collections.unmodifiableList(heldType_);
+          bitField0_ = (bitField0_ & ~0x00004000);
+        }
+        result.heldType_ = heldType_;
+        if (((bitField0_ & 0x00008000) == 0x00008000)) {
+          heldTypeId_ = java.util.Collections.unmodifiableList(heldTypeId_);
+          bitField0_ = (bitField0_ & ~0x00008000);
+        }
+        result.heldTypeId_ = heldTypeId_;
+        if (((from_bitField0_ & 0x00010000) == 0x00010000)) {
+          to_bitField0_ |= 0x00002000;
+        }
         result.flags_ = flags_;
         result.bitField0_ = to_bitField0_;
         return result;
@@ -6368,6 +6644,29 @@ public final class ProtoBuf {
         if (other.hasAbbreviatedTypeId()) {
           setAbbreviatedTypeId(other.getAbbreviatedTypeId());
         }
+        if (other.hasTypesHolder()) {
+          setTypesHolder(other.getTypesHolder());
+        }
+        if (!other.heldType_.isEmpty()) {
+          if (heldType_.isEmpty()) {
+            heldType_ = other.heldType_;
+            bitField0_ = (bitField0_ & ~0x00004000);
+          } else {
+            ensureHeldTypeIsMutable();
+            heldType_.addAll(other.heldType_);
+          }
+          
+        }
+        if (!other.heldTypeId_.isEmpty()) {
+          if (heldTypeId_.isEmpty()) {
+            heldTypeId_ = other.heldTypeId_;
+            bitField0_ = (bitField0_ & ~0x00008000);
+          } else {
+            ensureHeldTypeIdIsMutable();
+            heldTypeId_.addAll(other.heldTypeId_);
+          }
+          
+        }
         if (other.hasFlags()) {
           setFlags(other.getFlags());
         }
@@ -6398,6 +6697,12 @@ public final class ProtoBuf {
         }
         if (hasAbbreviatedType()) {
           if (!getAbbreviatedType().isInitialized()) {
+            
+            return false;
+          }
+        }
+        for (int i = 0; i < getHeldTypeCount(); i++) {
+          if (!getHeldType(i).isInitialized()) {
             
             return false;
           }
@@ -7117,6 +7422,232 @@ public final class ProtoBuf {
         return this;
       }
 
+      private org.jetbrains.kotlin.metadata.ProtoBuf.Type.TypesHolder typesHolder_ = org.jetbrains.kotlin.metadata.ProtoBuf.Type.TypesHolder.NOT_HOLDER;
+      /**
+       * <code>optional .org.jetbrains.kotlin.metadata.Type.TypesHolder types_holder = 15 [default = NOT_HOLDER];</code>
+       */
+      public boolean hasTypesHolder() {
+        return ((bitField0_ & 0x00002000) == 0x00002000);
+      }
+      /**
+       * <code>optional .org.jetbrains.kotlin.metadata.Type.TypesHolder types_holder = 15 [default = NOT_HOLDER];</code>
+       */
+      public org.jetbrains.kotlin.metadata.ProtoBuf.Type.TypesHolder getTypesHolder() {
+        return typesHolder_;
+      }
+      /**
+       * <code>optional .org.jetbrains.kotlin.metadata.Type.TypesHolder types_holder = 15 [default = NOT_HOLDER];</code>
+       */
+      public Builder setTypesHolder(org.jetbrains.kotlin.metadata.ProtoBuf.Type.TypesHolder value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        bitField0_ |= 0x00002000;
+        typesHolder_ = value;
+        
+        return this;
+      }
+      /**
+       * <code>optional .org.jetbrains.kotlin.metadata.Type.TypesHolder types_holder = 15 [default = NOT_HOLDER];</code>
+       */
+      public Builder clearTypesHolder() {
+        bitField0_ = (bitField0_ & ~0x00002000);
+        typesHolder_ = org.jetbrains.kotlin.metadata.ProtoBuf.Type.TypesHolder.NOT_HOLDER;
+        
+        return this;
+      }
+
+      private java.util.List<org.jetbrains.kotlin.metadata.ProtoBuf.Type> heldType_ =
+        java.util.Collections.emptyList();
+      private void ensureHeldTypeIsMutable() {
+        if (!((bitField0_ & 0x00004000) == 0x00004000)) {
+          heldType_ = new java.util.ArrayList<org.jetbrains.kotlin.metadata.ProtoBuf.Type>(heldType_);
+          bitField0_ |= 0x00004000;
+         }
+      }
+
+      /**
+       * <code>repeated .org.jetbrains.kotlin.metadata.Type held_type = 16;</code>
+       */
+      public java.util.List<org.jetbrains.kotlin.metadata.ProtoBuf.Type> getHeldTypeList() {
+        return java.util.Collections.unmodifiableList(heldType_);
+      }
+      /**
+       * <code>repeated .org.jetbrains.kotlin.metadata.Type held_type = 16;</code>
+       */
+      public int getHeldTypeCount() {
+        return heldType_.size();
+      }
+      /**
+       * <code>repeated .org.jetbrains.kotlin.metadata.Type held_type = 16;</code>
+       */
+      public org.jetbrains.kotlin.metadata.ProtoBuf.Type getHeldType(int index) {
+        return heldType_.get(index);
+      }
+      /**
+       * <code>repeated .org.jetbrains.kotlin.metadata.Type held_type = 16;</code>
+       */
+      public Builder setHeldType(
+          int index, org.jetbrains.kotlin.metadata.ProtoBuf.Type value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureHeldTypeIsMutable();
+        heldType_.set(index, value);
+
+        return this;
+      }
+      /**
+       * <code>repeated .org.jetbrains.kotlin.metadata.Type held_type = 16;</code>
+       */
+      public Builder setHeldType(
+          int index, org.jetbrains.kotlin.metadata.ProtoBuf.Type.Builder builderForValue) {
+        ensureHeldTypeIsMutable();
+        heldType_.set(index, builderForValue.build());
+
+        return this;
+      }
+      /**
+       * <code>repeated .org.jetbrains.kotlin.metadata.Type held_type = 16;</code>
+       */
+      public Builder addHeldType(org.jetbrains.kotlin.metadata.ProtoBuf.Type value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureHeldTypeIsMutable();
+        heldType_.add(value);
+
+        return this;
+      }
+      /**
+       * <code>repeated .org.jetbrains.kotlin.metadata.Type held_type = 16;</code>
+       */
+      public Builder addHeldType(
+          int index, org.jetbrains.kotlin.metadata.ProtoBuf.Type value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureHeldTypeIsMutable();
+        heldType_.add(index, value);
+
+        return this;
+      }
+      /**
+       * <code>repeated .org.jetbrains.kotlin.metadata.Type held_type = 16;</code>
+       */
+      public Builder addHeldType(
+          org.jetbrains.kotlin.metadata.ProtoBuf.Type.Builder builderForValue) {
+        ensureHeldTypeIsMutable();
+        heldType_.add(builderForValue.build());
+
+        return this;
+      }
+      /**
+       * <code>repeated .org.jetbrains.kotlin.metadata.Type held_type = 16;</code>
+       */
+      public Builder addHeldType(
+          int index, org.jetbrains.kotlin.metadata.ProtoBuf.Type.Builder builderForValue) {
+        ensureHeldTypeIsMutable();
+        heldType_.add(index, builderForValue.build());
+
+        return this;
+      }
+      /**
+       * <code>repeated .org.jetbrains.kotlin.metadata.Type held_type = 16;</code>
+       */
+      public Builder addAllHeldType(
+          java.lang.Iterable<? extends org.jetbrains.kotlin.metadata.ProtoBuf.Type> values) {
+        ensureHeldTypeIsMutable();
+        org.jetbrains.kotlin.protobuf.AbstractMessageLite.Builder.addAll(
+            values, heldType_);
+
+        return this;
+      }
+      /**
+       * <code>repeated .org.jetbrains.kotlin.metadata.Type held_type = 16;</code>
+       */
+      public Builder clearHeldType() {
+        heldType_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00004000);
+
+        return this;
+      }
+      /**
+       * <code>repeated .org.jetbrains.kotlin.metadata.Type held_type = 16;</code>
+       */
+      public Builder removeHeldType(int index) {
+        ensureHeldTypeIsMutable();
+        heldType_.remove(index);
+
+        return this;
+      }
+
+      private java.util.List<java.lang.Integer> heldTypeId_ = java.util.Collections.emptyList();
+      private void ensureHeldTypeIdIsMutable() {
+        if (!((bitField0_ & 0x00008000) == 0x00008000)) {
+          heldTypeId_ = new java.util.ArrayList<java.lang.Integer>(heldTypeId_);
+          bitField0_ |= 0x00008000;
+         }
+      }
+      /**
+       * <code>repeated int32 held_type_id = 17 [packed = true];</code>
+       */
+      public java.util.List<java.lang.Integer>
+          getHeldTypeIdList() {
+        return java.util.Collections.unmodifiableList(heldTypeId_);
+      }
+      /**
+       * <code>repeated int32 held_type_id = 17 [packed = true];</code>
+       */
+      public int getHeldTypeIdCount() {
+        return heldTypeId_.size();
+      }
+      /**
+       * <code>repeated int32 held_type_id = 17 [packed = true];</code>
+       */
+      public int getHeldTypeId(int index) {
+        return heldTypeId_.get(index);
+      }
+      /**
+       * <code>repeated int32 held_type_id = 17 [packed = true];</code>
+       */
+      public Builder setHeldTypeId(
+          int index, int value) {
+        ensureHeldTypeIdIsMutable();
+        heldTypeId_.set(index, value);
+        
+        return this;
+      }
+      /**
+       * <code>repeated int32 held_type_id = 17 [packed = true];</code>
+       */
+      public Builder addHeldTypeId(int value) {
+        ensureHeldTypeIdIsMutable();
+        heldTypeId_.add(value);
+        
+        return this;
+      }
+      /**
+       * <code>repeated int32 held_type_id = 17 [packed = true];</code>
+       */
+      public Builder addAllHeldTypeId(
+          java.lang.Iterable<? extends java.lang.Integer> values) {
+        ensureHeldTypeIdIsMutable();
+        org.jetbrains.kotlin.protobuf.AbstractMessageLite.Builder.addAll(
+            values, heldTypeId_);
+        
+        return this;
+      }
+      /**
+       * <code>repeated int32 held_type_id = 17 [packed = true];</code>
+       */
+      public Builder clearHeldTypeId() {
+        heldTypeId_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00008000);
+        
+        return this;
+      }
+
       private int flags_ ;
       /**
        * <code>optional int32 flags = 1;</code>
@@ -7126,7 +7657,7 @@ public final class ProtoBuf {
        * </pre>
        */
       public boolean hasFlags() {
-        return ((bitField0_ & 0x00002000) == 0x00002000);
+        return ((bitField0_ & 0x00010000) == 0x00010000);
       }
       /**
        * <code>optional int32 flags = 1;</code>
@@ -7146,7 +7677,7 @@ public final class ProtoBuf {
        * </pre>
        */
       public Builder setFlags(int value) {
-        bitField0_ |= 0x00002000;
+        bitField0_ |= 0x00010000;
         flags_ = value;
         
         return this;
@@ -7159,7 +7690,7 @@ public final class ProtoBuf {
        * </pre>
        */
       public Builder clearFlags() {
-        bitField0_ = (bitField0_ & ~0x00002000);
+        bitField0_ = (bitField0_ & ~0x00010000);
         flags_ = 0;
         
         return this;

@@ -159,6 +159,15 @@ message Type {
   optional Type abbreviated_type = 13;
   optional int32 abbreviated_type_id = 14 [(type_id_in_table) = true];
 
+  enum TypesHolder {
+    NOT_HOLDER = 0;
+    UNION_TYPE = 1;
+  }
+
+  optional TypesHolder types_holder = 15 [default = NOT_HOLDER];
+  repeated Type held_type = 16;
+  repeated int32 held_type_id = 17 [packed = true, (type_id_in_table) = true];
+
   /*
     suspend
    */
