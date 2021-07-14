@@ -42323,9 +42323,33 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         }
 
         @Test
+        @TestMetadata("applicability.kt")
+        public void testApplicability() throws Exception {
+            runTest("compiler/testData/codegen/box/unionTypes/applicability.kt");
+        }
+
+        @Test
+        @TestMetadata("callResolution.kt")
+        public void testCallResolution() throws Exception {
+            runTest("compiler/testData/codegen/box/unionTypes/callResolution.kt");
+        }
+
+        @Test
+        @TestMetadata("mayBe.kt")
+        public void testMayBe() throws Exception {
+            runTest("compiler/testData/codegen/box/unionTypes/mayBe.kt");
+        }
+
+        @Test
         @TestMetadata("multicatch.kt")
         public void testMulticatch() throws Exception {
             runTest("compiler/testData/codegen/box/unionTypes/multicatch.kt");
+        }
+
+        @Test
+        @TestMetadata("typeParameter.kt")
+        public void testTypeParameter() throws Exception {
+            runTest("compiler/testData/codegen/box/unionTypes/typeParameter.kt");
         }
     }
 
