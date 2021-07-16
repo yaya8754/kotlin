@@ -81,7 +81,7 @@ projectTest {
     dependsOn(runtimeJar)
     val runtimeJarPathProvider = project.provider { runtimeJar.get().outputs.files.asPath }
     doFirst {
-        systemProperty("compilerClasspath", "${runtimeJarPathProvider.get()}")
+        systemProperty("compilerClasspath", runtimeJarPathProvider.get())
         systemProperty("kotlin.native.home", kotlinNativeDist)
     }
 }
