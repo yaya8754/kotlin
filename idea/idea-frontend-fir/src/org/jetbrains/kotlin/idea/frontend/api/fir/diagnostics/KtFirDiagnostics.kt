@@ -2144,6 +2144,16 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = OperatorRenamedOnImport::class
     }
 
+    abstract class IllegalSuspendFunctionCall : KtFirDiagnostic<PsiElement>() {
+        override val diagnosticClass get() = IllegalSuspendFunctionCall::class
+        abstract val suspendCallable: KtSymbol
+    }
+
+    abstract class IllegalSuspendPropertyAccess : KtFirDiagnostic<PsiElement>() {
+        override val diagnosticClass get() = IllegalSuspendPropertyAccess::class
+        abstract val suspendCallable: KtSymbol
+    }
+
     abstract class ConflictingJvmDeclarations : KtFirDiagnostic<PsiElement>() {
         override val diagnosticClass get() = ConflictingJvmDeclarations::class
     }
