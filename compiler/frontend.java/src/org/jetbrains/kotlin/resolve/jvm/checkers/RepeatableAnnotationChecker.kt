@@ -5,6 +5,8 @@
 
 package org.jetbrains.kotlin.resolve.jvm.checkers
 
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.KotlinRetention
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
@@ -18,8 +20,12 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.getAnnotationRetention
 import org.jetbrains.kotlin.resolve.descriptorUtil.isRepeatableAnnotation
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 
-object RepeatableAnnotationChecker : AdditionalAnnotationChecker {
+class RepeatableAnnotationChecker(languageVersionSettings: LanguageVersionSettings) : AdditionalAnnotationChecker {
+    private val nonSourceDisallowed = !languageVersionSettings.supportsFeature(LanguageFeature.RepeatableAnnotations)
+
     override fun checkEntries(entries: List<KtAnnotationEntry>, actualTargets: List<KotlinTarget>, trace: BindingTrace) {
+        if (entries.isEmpty()) return
+
         val entryTypesWithAnnotations = hashMapOf<FqName, MutableList<AnnotationUseSiteTarget?>>()
 
         for (entry in entries) {
@@ -36,7 +42,9 @@ object RepeatableAnnotationChecker : AdditionalAnnotationChecker {
                 && classDescriptor.isRepeatableAnnotation()
                 && classDescriptor.getAnnotationRetention() != KotlinRetention.SOURCE
             ) {
-                trace.report(ErrorsJvm.NON_SOURCE_REPEATED_ANNOTATION.on(entry))
+                if (nonSourceDisallowed) {
+                    trace.report(ErrorsJvm.NON_SOURCE_REPEATED_ANNOTATION.on(entry))
+                }
             }
 
             existingTargetsForAnnotation.add(useSiteTarget)

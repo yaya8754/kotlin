@@ -423,6 +423,22 @@ public class IrBytecodeListingTestGenerated extends AbstractIrBytecodeListingTes
         public void testUnsignedTypes() throws Exception {
             runTest("compiler/testData/codegen/bytecodeListing/annotations/unsignedTypes.kt");
         }
+
+        @Nested
+        @TestMetadata("compiler/testData/codegen/bytecodeListing/annotations/repeatable")
+        @TestDataPath("$PROJECT_ROOT")
+        public class Repeatable {
+            @Test
+            public void testAllFilesPresentInRepeatable() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeListing/annotations/repeatable"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            }
+
+            @Test
+            @TestMetadata("javaAnnotation.kt")
+            public void testJavaAnnotation() throws Exception {
+                runTest("compiler/testData/codegen/bytecodeListing/annotations/repeatable/javaAnnotation.kt");
+            }
+        }
     }
 
     @Nested
