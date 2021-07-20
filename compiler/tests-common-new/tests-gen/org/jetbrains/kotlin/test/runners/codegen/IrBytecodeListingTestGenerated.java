@@ -438,6 +438,30 @@ public class IrBytecodeListingTestGenerated extends AbstractIrBytecodeListingTes
             public void testJavaAnnotation() throws Exception {
                 runTest("compiler/testData/codegen/bytecodeListing/annotations/repeatable/javaAnnotation.kt");
             }
+
+            @Test
+            @TestMetadata("kotlinAnnotation.kt")
+            public void testKotlinAnnotation() throws Exception {
+                runTest("compiler/testData/codegen/bytecodeListing/annotations/repeatable/kotlinAnnotation.kt");
+            }
+
+            @Test
+            @TestMetadata("kotlinAnnotationWithBothRepeatables.kt")
+            public void testKotlinAnnotationWithBothRepeatables() throws Exception {
+                runTest("compiler/testData/codegen/bytecodeListing/annotations/repeatable/kotlinAnnotationWithBothRepeatables.kt");
+            }
+
+            @Test
+            @TestMetadata("kotlinSpecificTargets.kt")
+            public void testKotlinSpecificTargets() throws Exception {
+                runTest("compiler/testData/codegen/bytecodeListing/annotations/repeatable/kotlinSpecificTargets.kt");
+            }
+
+            @Test
+            @TestMetadata("multipleRepeatableOrder.kt")
+            public void testMultipleRepeatableOrder() throws Exception {
+                runTest("compiler/testData/codegen/bytecodeListing/annotations/repeatable/multipleRepeatableOrder.kt");
+            }
         }
     }
 
