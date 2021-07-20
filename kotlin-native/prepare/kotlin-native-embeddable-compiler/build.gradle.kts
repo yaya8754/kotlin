@@ -68,6 +68,9 @@ val compiler = embeddableCompiler("kotlin-native-compiler-embeddable") {
 val runtimeJar = runtimeJar(compiler) {
     exclude("com/sun/jna/**")
     mergeServiceFiles()
+    outputs.upToDateWhen {
+        archiveFile.getOrNull()?.asFile?.exists() ?: false
+    }
 }
 
 
