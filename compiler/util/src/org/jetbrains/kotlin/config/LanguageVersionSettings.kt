@@ -217,6 +217,7 @@ enum class LanguageFeature(
     OptInRelease(KOTLIN_1_6),
     WarnAboutNonExhaustiveWhenOnAlgebraicTypes(KOTLIN_1_6, kind = BUG_FIX),
     InstantiationOfAnnotationClasses(KOTLIN_1_6),
+    RepeatableAnnotations(KOTLIN_1_6),
 
     // 1.7
 
