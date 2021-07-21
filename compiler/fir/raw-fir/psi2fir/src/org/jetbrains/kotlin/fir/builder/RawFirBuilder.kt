@@ -1048,7 +1048,7 @@ open class RawFirBuilder(
                             null,
                             ClassKind.CLASS,
                             containerTypeParameters = emptyList(),
-                        containingClassIsExpectClass = false
+                            containingClassIsExpectClass = false
                         )
 
                         for (declaration in objectDeclaration.declarations) {
@@ -1661,7 +1661,20 @@ open class RawFirBuilder(
                 expression.getQualifiedExpressionForSelector() != null -> expression.parent
                 else -> expression
             }.toFirSourceElement()
-            return generateAccessExpression(qualifiedSource, expression.toFirSourceElement(), expression.getReferencedNameAsName())
+
+            val expressionSource = expression.toFirSourceElement()
+            var diagnostic: ConeDiagnostic? = null
+            val rawText = expression.getReferencedNameElement().node.text
+            if (rawText.isUnderscore) {
+                diagnostic = ConeUnderscoreUsageWithoutBackticks(expressionSource)
+            }
+
+            return generateAccessExpression(
+                qualifiedSource,
+                expressionSource,
+                expression.getReferencedNameAsName(),
+                diagnostic
+            )
         }
 
         override fun visitConstantExpression(expression: KtConstantExpression, data: Unit): FirElement =

@@ -258,7 +258,8 @@ class FirCallResolver(
                     nonFatalDiagnostics = extractNonFatalDiagnostics(
                         nameReference.source,
                         qualifiedAccess.explicitReceiver,
-                        referencedSymbol
+                        referencedSymbol,
+                        qualifiedAccess.nonFatalDiagnostics
                     )
                 )
             }
@@ -284,12 +285,27 @@ class FirCallResolver(
     private fun extractNonFatalDiagnostics(
         source: FirSourceElement?,
         explicitReceiver: FirExpression?,
-        symbol: FirClassLikeSymbol<*>
+        symbol: FirClassLikeSymbol<*>,
+        extraNotFatalDiagnostics: List<ConeDiagnostic>
     ): List<ConeDiagnostic> {
         val prevDiagnostics = (explicitReceiver as? FirResolvedQualifier)?.nonFatalDiagnostics ?: emptyList()
-        return symbol.fir.deprecation?.forUseSite()?.let {
-            prevDiagnostics + ConeDeprecated(source, symbol, it)
-        } ?: prevDiagnostics
+        var result: MutableList<ConeDiagnostic>? = null
+
+        val deprecation = symbol.fir.deprecation?.forUseSite()
+        if (deprecation != null) {
+            result = mutableListOf()
+            result.addAll(prevDiagnostics)
+            result.add(ConeDeprecated(source, symbol, deprecation))
+        }
+        if (extraNotFatalDiagnostics.isNotEmpty()) {
+            if (result == null) {
+                result = mutableListOf()
+                result.addAll(prevDiagnostics)
+            }
+            result.addAll(extraNotFatalDiagnostics)
+        }
+
+        return result?.toList() ?: prevDiagnostics
     }
 
     fun resolveCallableReference(

@@ -3145,14 +3145,14 @@ internal class DelegateSpecialFunctionReturnTypeMismatchImpl(
 internal class UnderscoreIsReservedImpl(
     firDiagnostic: FirPsiDiagnostic,
     override val token: ValidityToken,
-) : KtFirDiagnostic.UnderscoreIsReserved(), KtAbstractFirDiagnostic<KtElement> {
+) : KtFirDiagnostic.UnderscoreIsReserved(), KtAbstractFirDiagnostic<PsiElement> {
     override val firDiagnostic: FirPsiDiagnostic by weakRef(firDiagnostic)
 }
 
 internal class UnderscoreUsageWithoutBackticksImpl(
     firDiagnostic: FirPsiDiagnostic,
     override val token: ValidityToken,
-) : KtFirDiagnostic.UnderscoreUsageWithoutBackticks(), KtAbstractFirDiagnostic<KtElement> {
+) : KtFirDiagnostic.UnderscoreUsageWithoutBackticks(), KtAbstractFirDiagnostic<PsiElement> {
     override val firDiagnostic: FirPsiDiagnostic by weakRef(firDiagnostic)
 }
 
