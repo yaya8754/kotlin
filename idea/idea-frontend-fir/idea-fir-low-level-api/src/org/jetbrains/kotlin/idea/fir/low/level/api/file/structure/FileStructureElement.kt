@@ -54,7 +54,7 @@ internal class KtToFirMapping(firElement: FirElement, recorder: FirElementsRecor
         if (userType.parent is KtTypeReference) return null
 
         return userTypeMapping.getOrPut(userType) {
-            val typeReference = KtPsiFactory(ktElement.project).createType(userType)
+            val typeReference = KtPsiFactory(ktElement.project).createType(userType.text)
             LowLevelFirApiFacadeForResolveOnAir.onAirResolveTypeInPlace(ktElement, typeReference, state)
         }
     }
