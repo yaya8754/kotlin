@@ -1,5 +1,5 @@
+// FIR_IDENTICAL
 // !DIAGNOSTICS: -UNUSED_PARAMETER
-// !WITH_NEW_INFERENCE
 // FILE: annotation.kt
 
 package kotlin
@@ -24,11 +24,11 @@ val member = build {
     add(42)
 }
 
-val memberWithoutAnn = <!NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER{NI}, TYPE_INFERENCE_NO_INFORMATION_FOR_PARAMETER{OI}!>wrongBuild<!> {
+val memberWithoutAnn = <!NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER!>wrongBuild<!> {
     add(42)
 }
 
-val extension = <!COULD_BE_INFERRED_ONLY_WITH_UNRESTRICTED_BUILDER_INFERENCE, NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER{OI}, TYPE_INFERENCE_NO_INFORMATION_FOR_PARAMETER{OI}!>build<!> {
+val extension = build {
     extensionAdd("foo")
 }
 

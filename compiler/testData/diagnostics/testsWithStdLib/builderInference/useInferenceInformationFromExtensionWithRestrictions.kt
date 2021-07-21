@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 // !DIAGNOSTICS: -UNUSED_PARAMETER
 
 // FILE: annotation.kt
@@ -23,7 +24,7 @@ val normal = generate {
     yield(42)
 }
 
-val extension = <!COULD_BE_INFERRED_ONLY_WITH_UNRESTRICTED_BUILDER_INFERENCE!>generate<!> {
+val extension = generate {
     extensionYield("foo")
 }
 
