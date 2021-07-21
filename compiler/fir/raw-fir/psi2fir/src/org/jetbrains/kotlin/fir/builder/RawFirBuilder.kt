@@ -22,9 +22,7 @@ import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyGetter
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertySetter
 import org.jetbrains.kotlin.fir.declarations.utils.*
-import org.jetbrains.kotlin.fir.diagnostics.ConeNotAnnotationContainer
-import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
-import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
+import org.jetbrains.kotlin.fir.diagnostics.*
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.*
 import org.jetbrains.kotlin.fir.expressions.impl.FirSingleExpressionBlock
@@ -2216,14 +2214,33 @@ open class RawFirBuilder(
             val sourceElement = expression.toFirSourceElement()
             val label = expression.getTargetLabel()
             val size = context.firLabels.size
+            var errorLabelSource: FirSourceElement? = null
             if (label != null) {
-                context.firLabels += buildLabel {
+                val rawName = label.getReferencedNameElement().node!!.text
+
+                val firLabel = buildLabel {
                     source = label.toFirPsiSourceElement()
-                    name = label.getReferencedName()
+                    name = KtPsiUtil.unquoteIdentifier(rawName)
                 }
+
+                if (rawName.isUnderscore) {
+                    errorLabelSource = firLabel.source
+                }
+
+                context.firLabels += firLabel
             }
-            val result = expression.baseExpression?.accept(this, data)
-                ?: buildErrorExpression(sourceElement, ConeSimpleDiagnostic("Empty label", DiagnosticKind.Syntax))
+            var result = expression.baseExpression?.accept(this, data)
+            if (result != null) {
+                if (errorLabelSource != null) {
+                    result = buildErrorExpression {
+                        this.source = result?.source
+                        this.expression = result as? FirExpression
+                        diagnostic = ConeUnderscoreIsReserved(errorLabelSource)
+                    }
+                }
+            } else {
+                result = buildErrorExpression(sourceElement, ConeSimpleDiagnostic("Empty label", DiagnosticKind.Syntax))
+            }
             if (size != context.firLabels.size) {
                 context.firLabels.removeLast()
             }

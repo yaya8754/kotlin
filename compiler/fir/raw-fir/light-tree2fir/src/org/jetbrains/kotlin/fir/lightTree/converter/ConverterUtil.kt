@@ -41,9 +41,20 @@ private val expressionSet = listOf(
 
 fun String?.nameAsSafeName(defaultName: String = ""): Name {
     return when {
-        this != null -> Name.identifier(this.replace("`", ""))
+        this != null -> Name.identifier(this.unquoteIdentifier())
         defaultName.isNotEmpty() -> Name.identifier(defaultName)
         else -> SpecialNames.NO_NAME_PROVIDED
+    }
+}
+
+fun String.unquoteIdentifier(): String {
+    if (indexOf('`') < 0) {
+        return this
+    }
+    return if (startsWith("`") && endsWith("`") && length >= 2) {
+        substring(1, length - 1)
+    } else {
+        this
     }
 }
 

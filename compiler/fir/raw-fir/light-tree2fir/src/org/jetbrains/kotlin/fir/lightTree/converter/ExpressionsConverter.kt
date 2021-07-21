@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.fir.declarations.builder.buildProperty
 import org.jetbrains.kotlin.fir.declarations.builder.buildValueParameter
 import org.jetbrains.kotlin.fir.declarations.impl.FirDeclarationStatusImpl
 import org.jetbrains.kotlin.fir.diagnostics.ConeNotAnnotationContainer
+import org.jetbrains.kotlin.fir.diagnostics.ConeUnderscoreIsReserved
 import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
 import org.jetbrains.kotlin.fir.expressions.*
@@ -331,9 +332,25 @@ class ExpressionsConverter(
     private fun convertLabeledExpression(labeledExpression: LighterASTNode): FirElement {
         val size = context.firLabels.size
         var firExpression: FirElement? = null
+        var errorLabel: FirLabel? = null
+
         labeledExpression.forEachChildren {
             when (it.tokenType) {
-                LABEL_QUALIFIER -> context.firLabels += buildLabel { name = it.toString().replace("@", "") }
+                LABEL_QUALIFIER -> {
+                    var rawName = it.toString()
+                    rawName = rawName.substring(0, rawName.length - 1)
+
+                    val firLabel = buildLabel {
+                        name = rawName.unquoteIdentifier()
+                        source = it.toFirSourceElement()
+                    }
+
+                    if (rawName.isUnderscore) {
+                        errorLabel = firLabel
+                    }
+
+                    context.firLabels += firLabel
+                }
                 BLOCK -> firExpression = declarationsConverter.convertBlock(it)
                 PROPERTY -> firExpression = declarationsConverter.convertPropertyDeclaration(it)
                 else -> if (it.isExpression()) firExpression = getAsFirExpression(it)
@@ -342,9 +359,23 @@ class ExpressionsConverter(
 
         if (size != context.firLabels.size) {
             context.firLabels.removeLast()
-            //println("Unused label: ${labeledExpression.getAsString()}")
         }
-        return firExpression ?: buildErrorExpression(null, ConeSimpleDiagnostic("Empty label", DiagnosticKind.Syntax))
+
+        val resultExpression = firExpression
+        val resultLabelSource = errorLabel?.source
+        return if (resultExpression != null) {
+            if (resultLabelSource != null) {
+                buildErrorExpression {
+                    source = resultExpression.source
+                    expression = resultExpression as? FirExpression
+                    diagnostic = ConeUnderscoreIsReserved(resultLabelSource)
+                }
+            } else {
+                resultExpression
+            }
+        } else {
+            buildErrorExpression(null, ConeSimpleDiagnostic("Empty label", DiagnosticKind.Syntax))
+        }
     }
 
     /**
