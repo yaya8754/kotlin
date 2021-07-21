@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 // !LANGUAGE: +NewInference
 
 fun main() {
@@ -15,5 +16,5 @@ class A {
     }
 }
 
-@<!EXPERIMENTAL_IS_NOT_ENABLED!>RequiresOptIn<!>(level = <!EXPERIMENTAL_IS_NOT_ENABLED!>RequiresOptIn<!>.Level.ERROR)
+@RequiresOptIn(level = RequiresOptIn.Level.ERROR)
 annotation class ExperimentalTime
