@@ -498,10 +498,9 @@ class KotlinCoreEnvironment private constructor(
         ): KotlinCoreApplicationEnvironment {
             synchronized(APPLICATION_LOCK) {
                 if (ourApplicationEnvironment == null) {
-                    val disposable = Disposer.newDisposable()
-                    ourApplicationEnvironment = createApplicationEnvironment(disposable, configuration, unitTestMode)
+                    ourApplicationEnvironment = createApplicationEnvironment(parentDisposable, configuration, unitTestMode)
                     ourProjectCount = 0
-                    Disposer.register(disposable, Disposable {
+                    Disposer.register(parentDisposable, Disposable {
                         synchronized(APPLICATION_LOCK) {
                             ourApplicationEnvironment = null
                         }
