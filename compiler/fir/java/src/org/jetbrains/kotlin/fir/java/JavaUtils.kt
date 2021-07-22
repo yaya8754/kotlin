@@ -704,7 +704,7 @@ internal fun JavaAnnotationArgument.toFirExpression(
                 getElements().mapTo(arguments) { it.toFirExpression(session, javaTypeParameterStack, argumentTypeRef) }
             }
         }
-        is JavaEnumValueAnnotationArgument -> buildEnumCall(session, enumClassId, entryName)
+        //is JavaEnumValueAnnotationArgument -> buildEnumCall(session, enumClassId, entryName)
         is JavaClassObjectAnnotationArgument -> buildGetClassCall {
             argumentList = buildUnaryArgumentList(
                 buildClassReferenceExpression {
