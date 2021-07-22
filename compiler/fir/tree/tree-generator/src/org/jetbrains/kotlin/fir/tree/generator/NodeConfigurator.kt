@@ -190,6 +190,7 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
             +typeArguments.withTransform()
             +receivers
             +field("source", sourceElementType, nullable = true, withReplace = true)
+            +fieldList("nonFatalDiagnostics", coneDiagnosticType)
         }
 
         constExpression.configure {

@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.fir.expressions.builder
 
 import org.jetbrains.kotlin.fir.FirSourceElement
 import org.jetbrains.kotlin.fir.builder.FirBuilderDsl
+import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
 import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccess
@@ -26,5 +27,7 @@ interface FirQualifiedAccessBuilder {
     abstract var dispatchReceiver: FirExpression
     abstract var extensionReceiver: FirExpression
     abstract var source: FirSourceElement?
+    abstract val nonFatalDiagnostics: MutableList<ConeDiagnostic>
+
     fun build(): FirQualifiedAccess
 }

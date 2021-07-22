@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.fir.expressions.impl
 
 import org.jetbrains.kotlin.fir.FirSourceElement
+import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
 import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirVariableAssignment
@@ -29,6 +30,7 @@ internal class FirVariableAssignmentImpl(
     override var dispatchReceiver: FirExpression,
     override var extensionReceiver: FirExpression,
     override var source: FirSourceElement?,
+    override val nonFatalDiagnostics: MutableList<ConeDiagnostic>,
     override var rValue: FirExpression,
 ) : FirVariableAssignment() {
     override var lValue: FirReference 

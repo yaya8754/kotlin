@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.fir.FirImplementationDetail
 import org.jetbrains.kotlin.fir.FirSourceElement
 import org.jetbrains.kotlin.fir.builder.FirAnnotationContainerBuilder
 import org.jetbrains.kotlin.fir.builder.FirBuilderDsl
+import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
 import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
 import org.jetbrains.kotlin.fir.expressions.FirArgumentList
 import org.jetbrains.kotlin.fir.expressions.FirExpression
@@ -32,6 +33,7 @@ class FirIntegerOperatorCall @FirImplementationDetail constructor(
     explicitReceiver: FirExpression?,
     dispatchReceiver: FirExpression,
     extensionReceiver: FirExpression,
+    nonFatalDiagnostics: MutableList<ConeDiagnostic>,
     argumentList: FirArgumentList,
     calleeReference: FirNamedReference,
 ) : FirFunctionCallImpl(
@@ -42,6 +44,7 @@ class FirIntegerOperatorCall @FirImplementationDetail constructor(
     explicitReceiver,
     dispatchReceiver,
     extensionReceiver,
+    nonFatalDiagnostics,
     argumentList,
     calleeReference,
     FirFunctionCallOrigin.Operator
@@ -57,6 +60,7 @@ class FirIntegerOperatorCallBuilder : FirQualifiedAccessBuilder, FirCallBuilder,
     override var dispatchReceiver: FirExpression = FirNoReceiverExpression
     override var extensionReceiver: FirExpression = FirNoReceiverExpression
     lateinit var calleeReference: FirNamedReference
+    override val nonFatalDiagnostics: MutableList<ConeDiagnostic> = mutableListOf()
     override lateinit var argumentList: FirArgumentList
 
     @OptIn(FirImplementationDetail::class)
@@ -69,6 +73,7 @@ class FirIntegerOperatorCallBuilder : FirQualifiedAccessBuilder, FirCallBuilder,
             explicitReceiver,
             dispatchReceiver,
             extensionReceiver,
+            nonFatalDiagnostics,
             argumentList,
             calleeReference,
         )

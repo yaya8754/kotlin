@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.fir.expressions
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirPureAbstractElement
 import org.jetbrains.kotlin.fir.FirSourceElement
+import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
 import org.jetbrains.kotlin.fir.references.FirReference
 import org.jetbrains.kotlin.fir.types.FirTypeProjection
 import org.jetbrains.kotlin.fir.types.FirTypeRef
@@ -27,6 +28,7 @@ abstract class FirVariableAssignment : FirPureAbstractElement(), FirQualifiedAcc
     abstract override val dispatchReceiver: FirExpression
     abstract override val extensionReceiver: FirExpression
     abstract override val source: FirSourceElement?
+    abstract override val nonFatalDiagnostics: List<ConeDiagnostic>
     abstract val lValue: FirReference
     abstract val lValueTypeRef: FirTypeRef
     abstract val rValue: FirExpression

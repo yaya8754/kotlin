@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.fir.expressions.impl
 
 import org.jetbrains.kotlin.fir.FirSourceElement
+import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
 import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccessExpression
@@ -29,6 +30,7 @@ internal class FirQualifiedAccessExpressionImpl(
     override var explicitReceiver: FirExpression?,
     override var dispatchReceiver: FirExpression,
     override var extensionReceiver: FirExpression,
+    override val nonFatalDiagnostics: MutableList<ConeDiagnostic>,
 ) : FirQualifiedAccessExpression() {
     override fun <R, D> acceptChildren(visitor: FirVisitor<R, D>, data: D) {
         typeRef.accept(visitor, data)

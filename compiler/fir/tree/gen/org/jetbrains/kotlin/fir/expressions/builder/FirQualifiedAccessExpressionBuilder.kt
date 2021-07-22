@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.fir.FirImplementationDetail
 import org.jetbrains.kotlin.fir.FirSourceElement
 import org.jetbrains.kotlin.fir.builder.FirAnnotationContainerBuilder
 import org.jetbrains.kotlin.fir.builder.FirBuilderDsl
+import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
 import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccessExpression
@@ -38,6 +39,7 @@ class FirQualifiedAccessExpressionBuilder : FirQualifiedAccessBuilder, FirAnnota
     override var explicitReceiver: FirExpression? = null
     override var dispatchReceiver: FirExpression = FirNoReceiverExpression
     override var extensionReceiver: FirExpression = FirNoReceiverExpression
+    override val nonFatalDiagnostics: MutableList<ConeDiagnostic> = mutableListOf()
 
     override fun build(): FirQualifiedAccessExpression {
         return FirQualifiedAccessExpressionImpl(
@@ -49,6 +51,7 @@ class FirQualifiedAccessExpressionBuilder : FirQualifiedAccessBuilder, FirAnnota
             explicitReceiver,
             dispatchReceiver,
             extensionReceiver,
+            nonFatalDiagnostics,
         )
     }
 
