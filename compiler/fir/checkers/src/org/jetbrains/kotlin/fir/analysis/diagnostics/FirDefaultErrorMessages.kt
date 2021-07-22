@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.FQ_N
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.COLLECTION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.MODULE_DATA
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.FUNCTION_PARAMETERS
-import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.NAME
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.NOT_RENDERED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.NULLABLE_STRING
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.RENDER_CLASS_OR_OBJECT

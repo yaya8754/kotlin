@@ -56,6 +56,7 @@ import kotlin.math.min
 const val GENERATE_SMAP = true
 const val NUMBERED_FUNCTION_PREFIX = "kotlin/jvm/functions/Function"
 const val INLINE_FUN_VAR_SUFFIX = "\$iv"
+const val REIFIED_THROWABLE_PREFIX = "Reified\$Throwable$"
 
 internal const val FIRST_FUN_LABEL = "$$$$\$ROOT$$$$$"
 internal const val SPECIAL_TRANSFORMATION_NAME = "\$special"

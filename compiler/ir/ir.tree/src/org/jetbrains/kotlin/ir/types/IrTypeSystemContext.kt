@@ -164,6 +164,10 @@ interface IrTypeSystemContext : TypeSystemContext, TypeSystemCommonSuperTypesCon
         return (this as? IrUnionType)?.nestedTypes
     }
 
+    override fun TypeConstructorMarker.getCommonSuperTypeIfUnionOrNull(): KotlinTypeMarker? {
+        return (this as? IrUnionType)?.commonSuperType
+    }
+
     override fun TypeConstructorMarker.isClassTypeConstructor() = this is IrClassSymbol
 
     override fun TypeConstructorMarker.isInterface(): Boolean {

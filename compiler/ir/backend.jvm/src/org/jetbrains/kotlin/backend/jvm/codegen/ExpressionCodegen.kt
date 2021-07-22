@@ -37,6 +37,8 @@ import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.ir.IrElement
+import org.jetbrains.kotlin.ir.builders.declarations.buildClass
+import org.jetbrains.kotlin.ir.builders.declarations.buildValueParameter
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.impl.IrFunctionImpl
 import org.jetbrains.kotlin.ir.descriptors.toIrBasedDescriptor
@@ -47,9 +49,11 @@ import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.symbols.IrTypeParameterSymbol
 import org.jetbrains.kotlin.ir.symbols.IrValueParameterSymbol
 import org.jetbrains.kotlin.ir.types.*
+import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitor
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.jvm.AsmTypes
 import org.jetbrains.kotlin.resolve.jvm.AsmTypes.JAVA_STRING_TYPE
 import org.jetbrains.kotlin.resolve.jvm.AsmTypes.OBJECT_TYPE
@@ -57,6 +61,7 @@ import org.jetbrains.kotlin.resolve.jvm.jvmSignature.JvmMethodParameterKind
 import org.jetbrains.kotlin.resolve.jvm.jvmSignature.JvmMethodSignature
 import org.jetbrains.kotlin.types.TypeSystemCommonBackendContext
 import org.jetbrains.kotlin.types.model.TypeParameterMarker
+import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.keysToMap
@@ -1196,11 +1201,15 @@ class ExpressionCodegen(
         for (clause in catches) {
             val clauseStart = markNewLabel()
             val parameter = clause.catchParameter
-            val descriptorType =
-                if (parameter.type is IrUnionType)
+            val descriptorType = when {
+                parameter.type.isReifiedTypeParameter ->
+                    generateReifiedThrowableClass(parameter.type.reifiedTypeParameterIdentifier)
+
+                parameter.type is IrUnionType ->
                     (parameter.type as IrUnionType).commonSuperType.asmType
-                else
-                    parameter.asmType
+
+                else -> parameter.asmType
+            }
             val index = frameMap.enter(clause.catchParameter, descriptorType)
             clause.markLineNumber(true)
             mv.store(index, descriptorType)
@@ -1332,6 +1341,24 @@ class ExpressionCodegen(
                 unwindBlockStack(afterReturnLabel, data) { it.breakLabel == jumpLabel || it.continueLabel == jumpLabel }
             }
         }
+    }
+
+    private fun generateReifiedThrowableClass(reifiedParameterName: String): Type {
+        val irClass = context.irFactory.buildClass {
+            name = Name.identifier("$REIFIED_THROWABLE_PREFIX$reifiedParameterName")
+        }.apply {
+            thisReceiver = buildValueParameter(this) {
+                name = Name.identifier("\$this")
+                type = IrSimpleTypeImpl(this@apply.symbol, false, emptyList(), emptyList())
+            }
+            superTypes = listOf(context.irBuiltIns.throwableType)
+            parent = classCodegen.irClass.parent
+        }
+
+        val codegen = ClassCodegen.getOrCreate(irClass, context)
+        codegen.generate()
+
+        return codegen.type
     }
 
     override fun visitThrow(expression: IrThrow, data: BlockInfo): PromisedValue {
@@ -1501,6 +1528,9 @@ class ExpressionCodegen(
 
     val IrType.isReifiedTypeParameter: Boolean
         get() = this.classifierOrNull?.safeAs<IrTypeParameterSymbol>()?.owner?.isReified == true
+
+    val IrType.reifiedTypeParameterIdentifier: String
+        get() = this.classifierOrFail.cast<IrTypeParameterSymbol>().owner.name.identifier
 
     companion object {
         internal fun generateClassInstance(v: InstructionAdapter, classType: IrType, typeMapper: IrTypeMapper) {

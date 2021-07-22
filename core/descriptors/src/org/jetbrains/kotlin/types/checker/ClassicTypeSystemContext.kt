@@ -113,6 +113,10 @@ interface ClassicTypeSystemContext : TypeSystemInferenceExtensionContext, TypeSy
         return null
     }
 
+    override fun TypeConstructorMarker.getCommonSuperTypeIfUnionOrNull(): KotlinTypeMarker? {
+        return null
+    }
+
     override fun identicalArguments(a: SimpleTypeMarker, b: SimpleTypeMarker): Boolean {
         require(a is SimpleType, a::errorMessage)
         require(b is SimpleType, b::errorMessage)

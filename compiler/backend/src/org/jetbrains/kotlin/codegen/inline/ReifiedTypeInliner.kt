@@ -21,14 +21,15 @@ import org.jetbrains.kotlin.codegen.generateIsCheck
 import org.jetbrains.kotlin.codegen.intrinsics.IntrinsicMethods
 import org.jetbrains.kotlin.codegen.optimization.common.intConstant
 import org.jetbrains.kotlin.codegen.state.GenerationState
+import org.jetbrains.kotlin.codegen.topLevelClassInternalName
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.isReleaseCoroutines
-import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.jvm.AsmTypes
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeSystemCommonBackendContext
 import org.jetbrains.kotlin.types.model.KotlinTypeMarker
+import org.jetbrains.kotlin.types.model.TypeConstructorMarker
 import org.jetbrains.kotlin.types.model.TypeParameterMarker
 import org.jetbrains.org.objectweb.asm.MethodVisitor
 import org.jetbrains.org.objectweb.asm.Opcodes
@@ -142,6 +143,8 @@ class ReifiedTypeInliner<KT : KotlinTypeMarker>(
      */
     fun reifyInstructions(node: MethodNode): ReifiedTypeParametersUsages {
         if (!hasReifiedParameters) return ReifiedTypeParametersUsages()
+
+        reifyThrowableInformation(node)
 
         val instructions = node.instructions
         maxStackSize = 0
@@ -330,6 +333,68 @@ class ReifiedTypeInliner<KT : KotlinTypeMarker>(
         }
 
         return false
+    }
+
+    private fun reifyThrowableInformation(node: MethodNode) {
+
+        fun indexOfReifiedParameterNameOrNull(marker: String): Int? {
+            val indexOfPrefix = marker.indexOf(REIFIED_THROWABLE_PREFIX)
+
+            if (indexOfPrefix == -1)
+                return null
+
+            return indexOfPrefix + REIFIED_THROWABLE_PREFIX.length
+        }
+
+        fun getParameterMappingByReifiedThrowableMarker(marker: String): TypeParameterMapping<KT>? {
+            val index = indexOfReifiedParameterNameOrNull(marker)
+                ?: return null
+
+            return parametersMapping?.get(marker.substring(index).removeSuffix(";"))
+        }
+
+        fun TypeSystemCommonBackendContext.getInternalName(typeMarker: KotlinTypeMarker?) =
+            typeMarker?.typeConstructor()?.getClassFqNameUnsafe()?.toSafe()?.topLevelClassInternalName()
+                ?: error("can not get internal name for $typeMarker")
+
+        val tryCatchBlocksToAdd = mutableListOf<TryCatchBlockNode>()
+        val tryCatchBlocksToRemove = mutableListOf<TryCatchBlockNode>()
+        for (tryCatchBlock in node.tryCatchBlocks) {
+            getParameterMappingByReifiedThrowableMarker(tryCatchBlock.type)?.let { mapping ->
+                with(typeSystem) {
+                    val nestedTypesIfUnion = (mapping.type as? TypeConstructorMarker)?.getNestedTypesIfUnionOrNull()
+
+                    if (nestedTypesIfUnion.isNullOrEmpty()) {
+                        tryCatchBlock.type = mapping.asmType?.internalName
+                    } else {
+                        tryCatchBlocksToAdd.addAll(nestedTypesIfUnion.map {
+                            TryCatchBlockNode(
+                                tryCatchBlock.start,
+                                tryCatchBlock.end,
+                                tryCatchBlock.handler,
+                                getInternalName(it.asSimpleType())
+                            )
+                        })
+                        tryCatchBlocksToRemove.add(tryCatchBlock)
+                    }
+                }
+            }
+        }
+        node.tryCatchBlocks.addAll(tryCatchBlocksToAdd)
+        node.tryCatchBlocks.removeAll(tryCatchBlocksToRemove)
+
+        for (localVariable in node.localVariables) {
+            getParameterMappingByReifiedThrowableMarker(localVariable.desc)?.let { mapping ->
+                with(typeSystem) {
+                    val newDesc = (mapping.type as? TypeConstructorMarker)
+                        ?.getCommonSuperTypeIfUnionOrNull()
+                        ?.let { "L${getInternalName(it)};" }
+                        ?: "L${mapping.asmType!!.internalName};"
+
+                    localVariable.desc = newDesc
+                }
+            }
+        }
     }
 }
 

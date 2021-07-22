@@ -29,18 +29,20 @@ object FirCatchParameterChecker : FirTryExpressionChecker() {
                 reporter.reportOn(source, FirErrors.VAL_OR_VAR_ON_CATCH_PARAMETER, it, context)
             }
 
+            val session = context.session
             val coneType = catchParameter.returnTypeRef.coneType
             if (coneType is ConeTypeParameterType) {
-                val isReified = coneType.lookupTag.typeParameterSymbol.isReified
+                val typeParameterSymbol = coneType.lookupTag.typeParameterSymbol
 
-                if (isReified) {
-                    reporter.reportOn(source, FirErrors.REIFIED_TYPE_IN_CATCH_CLAUSE, context)
+                if (typeParameterSymbol.isReified) {
+                    if (typeParameterSymbol.resolvedBounds.none { it.coneType.isSubtypeOfThrowable(session) }) {
+                        reporter.reportOn(source, FirErrors.REIFIED_TYPE_IN_CATCH_CLAUSE, context)
+                    }
                 } else {
                     reporter.reportOn(source, FirErrors.TYPE_PARAMETER_IN_CATCH_CLAUSE, context)
                 }
             }
 
-            val session = context.session
             if (!coneType.isSubtypeOfThrowable(session)) {
                 reporter.reportOn(source, FirErrors.THROWABLE_TYPE_MISMATCH, coneType, context)
             }

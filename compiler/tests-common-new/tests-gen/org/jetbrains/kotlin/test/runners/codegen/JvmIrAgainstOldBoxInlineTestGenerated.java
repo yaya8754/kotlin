@@ -3868,6 +3868,12 @@ public class JvmIrAgainstOldBoxInlineTestGenerated extends AbstractJvmIrAgainstO
             runTest("compiler/testData/codegen/boxInline/reified/packages.kt");
         }
 
+        @Test
+        @TestMetadata("reifiedCatchParameter.kt")
+        public void testReifiedCatchParameter() throws Exception {
+            runTest("compiler/testData/codegen/boxInline/reified/reifiedCatchParameter.kt");
+        }
+
         @Nested
         @TestMetadata("compiler/testData/codegen/boxInline/reified/checkCast")
         @TestDataPath("$PROJECT_ROOT")

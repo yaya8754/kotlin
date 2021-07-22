@@ -289,6 +289,10 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
         return (this as? ConeUnionType)?.nestedTypes
     }
 
+    override fun TypeConstructorMarker.getCommonSuperTypeIfUnionOrNull(): KotlinTypeMarker? {
+        return (this as? ConeUnionType)?.commonSuperType
+    }
+
     override fun TypeConstructorMarker.isClassTypeConstructor(): Boolean {
         return this is ConeClassLikeLookupTag
     }
