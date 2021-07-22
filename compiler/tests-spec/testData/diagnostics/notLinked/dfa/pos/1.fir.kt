@@ -1302,12 +1302,12 @@ open class Case29(a: Int?, val b: Float?, private val c: Unit?, protected val d:
         if (w != null || <!SENSELESS_COMPARISON!>this.w != null<!>) this.w
 
         s = null
-        <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any?")!>s<!>.hashCode()
-        <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any?")!>s<!>
-        if (s != null) <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any? & kotlin.Any")!>s<!>
-        if (this.s != null) <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any? & kotlin.Any")!>s<!>
-        if (s != null || <!SENSELESS_COMPARISON!>this.s != null<!>) <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any? & kotlin.Any")!>s<!>
-        if (s != null || <!SENSELESS_COMPARISON!>this.s != null<!>) this.s
+        <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any? & kotlin.Any?")!>s<!>.hashCode()
+        <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any? & kotlin.Any?")!>s<!>
+        if (<!SENSELESS_COMPARISON!>s != null<!>) <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any? & kotlin.Any")!>s<!>
+        if (<!SENSELESS_COMPARISON!>this.s != null<!>) <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any? & kotlin.Any")!>s<!>
+        if (<!SENSELESS_COMPARISON!>s != null<!> || <!SENSELESS_COMPARISON!>this.s != null<!>) <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any? & kotlin.Any")!>s<!>
+        if (<!SENSELESS_COMPARISON!>s != null<!> || <!SENSELESS_COMPARISON!>this.s != null<!>) this.s
     }
 
     fun test() {
@@ -2346,12 +2346,12 @@ sealed class Case30(a: Int?, val b: Float?, private val c: Unit?, protected val 
         if (w != null || <!SENSELESS_COMPARISON!>this.w != null<!>) this.w
 
         s = null
-        <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any?")!>s<!>.hashCode()
-        <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any?")!>s<!>
-        if (s != null) <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any? & kotlin.Any")!>s<!>
-        if (this.s != null) <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any? & kotlin.Any")!>s<!>
-        if (s != null || <!SENSELESS_COMPARISON!>this.s != null<!>) <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any? & kotlin.Any")!>s<!>
-        if (s != null || <!SENSELESS_COMPARISON!>this.s != null<!>) this.s
+        <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any? & kotlin.Any?")!>s<!>.hashCode()
+        <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any? & kotlin.Any?")!>s<!>
+        if (<!SENSELESS_COMPARISON!>s != null<!>) <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any? & kotlin.Any")!>s<!>
+        if (<!SENSELESS_COMPARISON!>this.s != null<!>) <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any? & kotlin.Any")!>s<!>
+        if (<!SENSELESS_COMPARISON!>s != null<!> || <!SENSELESS_COMPARISON!>this.s != null<!>) <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any? & kotlin.Any")!>s<!>
+        if (<!SENSELESS_COMPARISON!>s != null<!> || <!SENSELESS_COMPARISON!>this.s != null<!>) this.s
     }
 
     fun test() {
@@ -3391,12 +3391,12 @@ enum class Case31(a: Int?, val b: Float?, private val c: Unit?, protected val d:
         if (w != null || <!SENSELESS_COMPARISON!>this.w != null<!>) this.w
 
         s = null
-        <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any?")!>s<!>.hashCode()
-        <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any?")!>s<!>
-        if (s != null) <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any? & kotlin.Any")!>s<!>
-        if (this.s != null) <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any? & kotlin.Any")!>s<!>
-        if (s != null || <!SENSELESS_COMPARISON!>this.s != null<!>) <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any? & kotlin.Any")!>s<!>
-        if (s != null || <!SENSELESS_COMPARISON!>this.s != null<!>) this.s
+        <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any? & kotlin.Any?")!>s<!>.hashCode()
+        <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any? & kotlin.Any?")!>s<!>
+        if (<!SENSELESS_COMPARISON!>s != null<!>) <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any? & kotlin.Any")!>s<!>
+        if (<!SENSELESS_COMPARISON!>this.s != null<!>) <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any? & kotlin.Any")!>s<!>
+        if (<!SENSELESS_COMPARISON!>s != null<!> || <!SENSELESS_COMPARISON!>this.s != null<!>) <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any? & kotlin.Any")!>s<!>
+        if (<!SENSELESS_COMPARISON!>s != null<!> || <!SENSELESS_COMPARISON!>this.s != null<!>) this.s
     }
 
     fun test() {
@@ -4039,12 +4039,12 @@ object Case32 {
         if (w != null || <!SENSELESS_COMPARISON!>this.w != null<!>) this.w
 
         s = null
-        <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any?")!>s<!>.hashCode()
-        <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any?")!>s<!>
-        if (s != null) <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any? & kotlin.Any")!>s<!>
-        if (this.s != null) <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any? & kotlin.Any")!>s<!>
-        if (s != null || <!SENSELESS_COMPARISON!>this.s != null<!>) <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any? & kotlin.Any")!>s<!>
-        if (s != null || <!SENSELESS_COMPARISON!>this.s != null<!>) this.s
+        <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any? & kotlin.Any?")!>s<!>.hashCode()
+        <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any? & kotlin.Any?")!>s<!>
+        if (<!SENSELESS_COMPARISON!>s != null<!>) <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any? & kotlin.Any")!>s<!>
+        if (<!SENSELESS_COMPARISON!>this.s != null<!>) <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any? & kotlin.Any")!>s<!>
+        if (<!SENSELESS_COMPARISON!>s != null<!> || <!SENSELESS_COMPARISON!>this.s != null<!>) <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.Any? & kotlin.Any")!>s<!>
+        if (<!SENSELESS_COMPARISON!>s != null<!> || <!SENSELESS_COMPARISON!>this.s != null<!>) this.s
     }
 
     fun test() {

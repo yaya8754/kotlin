@@ -4,7 +4,7 @@ fun foo() {
     var x: String? = ""
     val y = x
     x = null
-    if (y != null) {
+    if (<!SENSELESS_COMPARISON!>y != null<!>) {
         x.hashCode()
     }
 }
