@@ -3164,6 +3164,14 @@ internal class InvalidCharactersImpl(
     override val firDiagnostic: FirPsiDiagnostic by weakRef(firDiagnostic)
 }
 
+internal class DangerousCharactersImpl(
+    override val characters: String,
+    firDiagnostic: FirPsiDiagnostic,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.DangerousCharacters(), KtAbstractFirDiagnostic<KtNamedDeclaration> {
+    override val firDiagnostic: FirPsiDiagnostic by weakRef(firDiagnostic)
+}
+
 internal class EqualityNotApplicableImpl(
     override val operator: String,
     override val leftType: KtType,

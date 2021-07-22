@@ -106,6 +106,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CREATING_AN_INSTA
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CYCLIC_CONSTRUCTOR_DELEGATION_CALL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CYCLIC_GENERIC_UPPER_BOUND
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CYCLIC_INHERITANCE_HIERARCHY
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DANGEROUS_CHARACTERS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DATA_CLASS_NOT_PROPERTY_PARAMETER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DATA_CLASS_OVERRIDE_CONFLICT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DATA_CLASS_VARARG_PARAMETER
@@ -1352,6 +1353,11 @@ class FirDefaultErrorMessages {
             map.put(
                 INVALID_CHARACTERS,
                 "Name {0}",
+                STRING
+            )
+            map.put(
+                DANGEROUS_CHARACTERS,
+                "Name contains characters which can cause problems on Windows: {0}",
                 STRING
             )
             map.put(
