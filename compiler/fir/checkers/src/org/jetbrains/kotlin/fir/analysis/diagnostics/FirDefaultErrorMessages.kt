@@ -360,6 +360,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPEALIAS_SHOULD_
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPE_ARGUMENTS_NOT_ALLOWED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPE_CANT_BE_USED_FOR_CONST_VAL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPE_MISMATCH
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPE_PARAMETERS_IN_ANONYMOUS_OBJECT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPE_PARAMETERS_IN_ENUM
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPE_PARAMETERS_IN_OBJECT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPE_PARAMETERS_NOT_ALLOWED
@@ -747,6 +748,8 @@ class FirDefaultErrorMessages {
                 RENDER_CLASS_OR_OBJECT_NAME
             )
             map.put(TYPE_PARAMETERS_IN_OBJECT, "Type parameters are not allowed for objects")
+            map.put(TYPE_PARAMETERS_IN_ANONYMOUS_OBJECT, "Type parameters for anonymous objects are deprecated")
+
 //            map.put(ILLEGAL_PROJECTION_USAGE, ...) // &
             map.put(TYPE_PARAMETERS_IN_ENUM, "Enum class cannot have type parameters")
             map.put(
