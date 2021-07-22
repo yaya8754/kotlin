@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.fir.resolve.calls.FirNamedReferenceWithCandidate
 import org.jetbrains.kotlin.fir.resolve.constructFunctionalTypeRef
 import org.jetbrains.kotlin.fir.resolve.dfa.FirControlFlowGraphReferenceImpl
 import org.jetbrains.kotlin.fir.resolve.dfa.unwrapSmartcastExpression
+import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeLocalVariableNoTypeOrInitializer
 import org.jetbrains.kotlin.fir.resolve.inference.extractLambdaInfoFromFunctionalType
 import org.jetbrains.kotlin.fir.resolve.inference.isSuspendFunctionType
 import org.jetbrains.kotlin.fir.resolve.mode
@@ -850,10 +851,8 @@ open class FirDeclarationsResolveTransformer(transformer: FirBodyResolveTransfor
                     transformer,
                     withExpectedType(
                         buildErrorTypeRef {
-                            diagnostic = ConeSimpleDiagnostic(
-                                "Cannot infer variable type without initializer / getter / delegate",
-                                DiagnosticKind.InferenceError,
-                            )
+                            diagnostic = ConeLocalVariableNoTypeOrInitializer(variable)
+                            source = variable.source
                         },
                     )
                 )

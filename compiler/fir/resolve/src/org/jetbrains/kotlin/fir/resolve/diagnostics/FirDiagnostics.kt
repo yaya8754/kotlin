@@ -9,6 +9,7 @@ import kotlinx.collections.immutable.ImmutableList
 import org.jetbrains.kotlin.fir.FirSourceElement
 import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
+import org.jetbrains.kotlin.fir.declarations.FirVariable
 import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
 import org.jetbrains.kotlin.fir.render
 import org.jetbrains.kotlin.fir.resolve.calls.Candidate
@@ -145,6 +146,10 @@ class ConeImportFromSingleton(val name: Name) : ConeDiagnostic() {
 
 class ConeUnsupportedDynamicType() : ConeDiagnostic() {
     override val reason: String get() = "Dynamic types are not supported in this context"
+}
+
+class ConeLocalVariableNoTypeOrInitializer(val variable: FirVariable) : ConeDiagnostic() {
+    override val reason: String get() = "Cannot infer variable type without initializer / getter / delegate"
 }
 
 private fun describeSymbol(symbol: FirBasedSymbol<*>): String {
