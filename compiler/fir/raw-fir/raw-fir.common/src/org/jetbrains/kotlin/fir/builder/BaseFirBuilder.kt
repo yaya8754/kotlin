@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.fir.builder
 
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.KtNodeTypes.*
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.fir.*
@@ -34,6 +35,7 @@ import org.jetbrains.kotlin.lexer.KtTokens.OPEN_QUOTE
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.parsing.*
 import org.jetbrains.kotlin.types.ConstantValueKind
 import org.jetbrains.kotlin.util.OperatorNameConventions
@@ -1195,6 +1197,24 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
         }
     }
 
+    protected fun convertValueParameterName(
+        safeName: Name,
+        rawName: String?,
+        valueParameterDeclaration: ValueParameterDeclaration
+    ): Name {
+        return if (valueParameterDeclaration == ValueParameterDeclaration.LAMBDA && rawName == "_"
+            ||
+            valueParameterDeclaration == ValueParameterDeclaration.CATCH &&
+            baseSession.sessionProvider != null &&
+            baseSession.languageVersionSettings.supportsFeature(LanguageFeature.ForbidReferencingToUnderscoreNamedParameterOfCatchBlock) &&
+            safeName.asString() == "_"
+        ) {
+            SpecialNames.UNDERSCORE_FOR_UNUSED_VAR
+        } else {
+            safeName
+        }
+    }
+
     /**** Common utils ****/
     companion object {
         val ANONYMOUS_OBJECT_NAME = Name.special("<anonymous>")
@@ -1202,5 +1222,11 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
         val DESTRUCTURING_NAME = Name.special("<destruct>")
 
         val ITERATOR_NAME = Name.special("<iterator>")
+    }
+
+    enum class ValueParameterDeclaration {
+        OTHER,
+        LAMBDA,
+        CATCH
     }
 }
