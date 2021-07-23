@@ -49,6 +49,7 @@ import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtIfExpression
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtModifierListOwner
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
@@ -1956,6 +1957,10 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
 
     abstract class UnderscoreUsageWithoutBackticks : KtFirDiagnostic<PsiElement>() {
         override val diagnosticClass get() = UnderscoreUsageWithoutBackticks::class
+    }
+
+    abstract class ResolvedToUnderscoreNamedCatchParameter : KtFirDiagnostic<KtNameReferenceExpression>() {
+        override val diagnosticClass get() = ResolvedToUnderscoreNamedCatchParameter::class
     }
 
     abstract class InvalidCharacters : KtFirDiagnostic<KtNamedDeclaration>() {

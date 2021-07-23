@@ -326,6 +326,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REIFIED_TYPE_PARA
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REPEATED_BOUND
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REPEATED_MODIFIER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RESERVED_MEMBER_INSIDE_INLINE_CLASS
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RESOLVED_TO_UNDERSCORE_NAMED_CATCH_PARAMETER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RESULT_TYPE_MISMATCH
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RETURN_IN_FUNCTION_WITH_EXPRESSION_BODY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RETURN_NOT_ALLOWED
@@ -1349,6 +1350,10 @@ class FirDefaultErrorMessages {
             map.put(
                 UNDERSCORE_USAGE_WITHOUT_BACKTICKS,
                 "Names _, __, ___, ... can be used only in back-ticks (`_`, `__`, `___`, ...)"
+            )
+            map.put(
+                RESOLVED_TO_UNDERSCORE_NAMED_CATCH_PARAMETER,
+                "Referencing to an underscore-named parameter is deprecated. It will be an error in a future release."
             )
             map.put(
                 INVALID_CHARACTERS,
