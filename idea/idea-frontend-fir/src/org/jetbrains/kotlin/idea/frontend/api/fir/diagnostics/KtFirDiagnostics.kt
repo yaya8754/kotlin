@@ -2158,6 +2158,10 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = NonLocalSuspensionPoint::class
     }
 
+    abstract class IllegalRestrictedSuspendingFunctionCall : KtFirDiagnostic<PsiElement>() {
+        override val diagnosticClass get() = IllegalRestrictedSuspendingFunctionCall::class
+    }
+
     abstract class ConflictingJvmDeclarations : KtFirDiagnostic<PsiElement>() {
         override val diagnosticClass get() = ConflictingJvmDeclarations::class
     }
