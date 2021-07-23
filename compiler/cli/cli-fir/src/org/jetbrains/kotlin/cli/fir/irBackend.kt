@@ -24,8 +24,6 @@ import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.common.messages.OutputMessageUtil
 import org.jetbrains.kotlin.cli.common.output.writeAll
 import org.jetbrains.kotlin.cli.jvm.compiler.CompileEnvironmentUtil
-import org.jetbrains.kotlin.cli.jvm.compiler.NoScopeRecordCliBindingTrace
-import org.jetbrains.kotlin.cli.jvm.compiler.TopDownAnalyzerFacadeForJVM
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.codegen.CodegenFactory
 import org.jetbrains.kotlin.codegen.state.GenerationState
@@ -33,13 +31,10 @@ import org.jetbrains.kotlin.codegen.state.GenerationStateEventCallback
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
-import org.jetbrains.kotlin.container.get
 import org.jetbrains.kotlin.modules.Module
 import org.jetbrains.kotlin.modules.TargetId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus
-import org.jetbrains.kotlin.resolve.CompilerEnvironment
-import org.jetbrains.kotlin.resolve.lazy.declarations.FileBasedDeclarationProviderFactory
 import java.io.File
 
 class IrJvmBackendBuilder : CompilationStageBuilder<FrontendToIrConverterResult, GenerationState> {
@@ -60,23 +55,16 @@ class IrJvmBackend internal constructor(
 ) : CompilationStage<FrontendToIrConverterResult, GenerationState> {
 
     override fun execute(input: FrontendToIrConverterResult): ExecutionResult<GenerationState> {
-        val dummyBindingContext = NoScopeRecordCliBindingTrace().bindingContext
-
-        val codegenFactory = JvmIrCodegenFactory(input.configuration.get(CLIConfigurationKeys.PHASE_CONFIG) ?: PhaseConfig(jvmPhases))
-
-        // Create and initialize the module and its dependencies
-        val container = TopDownAnalyzerFacadeForJVM.createContainer(
-            input.project, input.sourceFiles, NoScopeRecordCliBindingTrace(),
-            input.configuration, { input.packagePartProvider ?: error("") },
-            ::FileBasedDeclarationProviderFactory, CompilerEnvironment,
-            TopDownAnalyzerFacadeForJVM.newModuleSearchScope(input.project, input.sourceFiles), emptyList()
+        val codegenFactory = JvmIrCodegenFactory(
+            input.configuration,
+            input.configuration.get(CLIConfigurationKeys.PHASE_CONFIG) ?: PhaseConfig(jvmPhases)
         )
 
-        val generatorExtensions = JvmGeneratorExtensionsImpl()
+        val generatorExtensions = JvmGeneratorExtensionsImpl(input.configuration)
 
         val generationState = GenerationState.Builder(
             input.project, ClassBuilderFactories.BINARIES,
-            container.get(), dummyBindingContext, input.sourceFiles,
+            input.moduleFragment.descriptor, input.frontendBindingContext, input.sourceFiles,
             input.configuration
         ).codegenFactory(
             codegenFactory
@@ -87,7 +75,7 @@ class IrJvmBackend internal constructor(
         ).isIrBackend(
             true
         ).jvmBackendClassResolver(
-            input.jvmBackendClassResolver
+            input.jvmBackendClassResolver!!
         ).build()
 
         ProgressIndicatorAndCompilationCanceledStatus.checkCanceled()
@@ -108,7 +96,7 @@ class IrJvmBackend internal constructor(
         AnalyzerWithCompilerReport.reportDiagnostics(
             FilteredJvmDiagnostics(
                 generationState.collectedExtraJvmDiagnostics,
-                dummyBindingContext.diagnostics
+                input.frontendBindingContext.diagnostics
             ),
             messageCollector
         )
@@ -151,7 +139,7 @@ private fun writeOutput(
     }
 }
 
-private fun writeOutput(
+internal fun writeOutput(
     configuration: CompilerConfiguration,
     outputFiles: OutputFileCollection,
     mainClassFqName: FqName?

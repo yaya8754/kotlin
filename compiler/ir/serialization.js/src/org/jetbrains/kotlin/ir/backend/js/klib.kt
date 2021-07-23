@@ -92,12 +92,12 @@ fun loadKlib(klibPath: String) =
 private val CompilerConfiguration.metadataVersion
     get() = get(CommonConfigurationKeys.METADATA_VERSION) as? KlibMetadataVersion ?: KlibMetadataVersion.INSTANCE
 
-private val CompilerConfiguration.expectActualLinker: Boolean
+val CompilerConfiguration.expectActualLinker: Boolean
     get() = get(CommonConfigurationKeys.EXPECT_ACTUAL_LINKER) ?: false
 
 class KotlinFileSerializedData(val metadata: ByteArray, val irData: SerializedIrFile)
 
-private fun IrMessageLogger?.toResolverLogger(): Logger {
+fun IrMessageLogger?.toResolverLogger(): Logger {
     if (this == null) return DummyLogger
 
     return object : Logger {
@@ -134,39 +134,9 @@ fun generateKLib(
     abiVersion: KotlinAbiVersion = KotlinAbiVersion.CURRENT,
     jsOutputName: String?
 ) {
-    val incrementalDataProvider = configuration.get(JSConfigurationKeys.INCREMENTAL_DATA_PROVIDER)
     val errorPolicy = configuration.get(JSConfigurationKeys.ERROR_TOLERANCE_POLICY) ?: ErrorTolerancePolicy.DEFAULT
     val messageLogger = configuration.get(IrMessageLogger.IR_MESSAGE_LOGGER) ?: IrMessageLogger.None
-
-    val icData: List<KotlinFileSerializedData>
-    val serializedIrFiles: List<SerializedIrFile>?
-
-    if (incrementalDataProvider != null) {
-        val nonCompiledSources = files.map { VfsUtilCore.virtualToIoFile(it.virtualFile) to it }.toMap()
-        val compiledIrFiles = incrementalDataProvider.serializedIrFiles
-        val compiledMetaFiles = incrementalDataProvider.compiledPackageParts
-
-        assert(compiledIrFiles.size == compiledMetaFiles.size)
-
-        val storage = mutableListOf<KotlinFileSerializedData>()
-
-        for (f in compiledIrFiles.keys) {
-            if (f in nonCompiledSources) continue
-
-            val irData = compiledIrFiles[f] ?: error("No Ir Data found for file $f")
-            val metaFile = compiledMetaFiles[f] ?: error("No Meta Data found for file $f")
-            val irFile = with(irData) {
-                SerializedIrFile(fileData, String(fqn), f.path.replace('\\', '/'), types, signatures, strings, bodies, declarations, debugInfo)
-            }
-            storage.add(KotlinFileSerializedData(metaFile.metadata, irFile))
-        }
-
-        icData = storage
-        serializedIrFiles = storage.map { it.irData }
-    } else {
-        icData = emptyList()
-        serializedIrFiles = null
-    }
+    val (icData, serializedIrFiles) = prepareIncrementalCompilationData(configuration, files)
 
     val depsDescriptors =
         ModulesStructure(project, MainModule.SourceFiles(files), analyzer, configuration, dependencies, friendDependencies, EmptyLoweringsCacheProvider)
@@ -227,6 +197,47 @@ fun generateKLib(
     )
 }
 
+fun prepareIncrementalCompilationData(
+    configuration: CompilerConfiguration,
+    files: List<KtFile>
+): Pair<List<KotlinFileSerializedData>, List<SerializedIrFile>?> {
+    val incrementalDataProvider = configuration.get(JSConfigurationKeys.INCREMENTAL_DATA_PROVIDER)
+
+    val icData: List<KotlinFileSerializedData>
+    val serializedIrFiles: List<SerializedIrFile>?
+
+    if (incrementalDataProvider != null) {
+        val nonCompiledSources = files.map { VfsUtilCore.virtualToIoFile(it.virtualFile) to it }.toMap()
+        val compiledIrFiles = incrementalDataProvider.serializedIrFiles
+        val compiledMetaFiles = incrementalDataProvider.compiledPackageParts
+
+        assert(compiledIrFiles.size == compiledMetaFiles.size)
+
+        val storage = mutableListOf<KotlinFileSerializedData>()
+
+        for (f in compiledIrFiles.keys) {
+            if (f in nonCompiledSources) continue
+
+            val irData = compiledIrFiles[f] ?: error("No Ir Data found for file $f")
+            val metaFile = compiledMetaFiles[f] ?: error("No Meta Data found for file $f")
+            val irFile = with(irData) {
+                SerializedIrFile(
+                    fileData, String(fqn), f.path.replace('\\', '/'),
+                    types, signatures, strings, bodies, declarations, debugInfo
+                )
+            }
+            storage.add(KotlinFileSerializedData(metaFile.metadata, irFile))
+        }
+
+        icData = storage
+        serializedIrFiles = storage.map { it.irData }
+    } else {
+        icData = emptyList()
+        serializedIrFiles = null
+    }
+    return icData to serializedIrFiles
+}
+
 data class IrModuleInfo(
     val module: IrModuleFragment,
     val allDependencies: List<IrModuleFragment>,
@@ -237,7 +248,7 @@ data class IrModuleInfo(
     val loweredIrLoaded: Set<IrModuleFragment> = emptySet(),
 )
 
-private fun sortDependencies(resolvedDependencies: List<KotlinResolvedLibrary>, mapping: Map<KotlinLibrary, ModuleDescriptor>): Collection<KotlinLibrary> {
+fun sortDependencies(resolvedDependencies: List<KotlinResolvedLibrary>, mapping: Map<KotlinLibrary, ModuleDescriptor>): Collection<KotlinLibrary> {
     val m2l = mapping.map { it.value to it.key }.toMap()
     val dependencies = resolvedDependencies.map { it.library }
 
@@ -472,8 +483,8 @@ sealed class MainModule {
     class Klib(val libPath: String) : MainModule()
 }
 
-private class ModulesStructure(
-    private val project: Project,
+class ModulesStructure(
+    val project: Project,
     private val mainModule: MainModule,
     private val analyzer: AbstractAnalyzerWithCompilerReport,
     val compilerConfiguration: CompilerConfiguration,

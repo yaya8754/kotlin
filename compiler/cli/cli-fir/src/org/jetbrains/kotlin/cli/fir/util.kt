@@ -55,7 +55,7 @@ fun MessageCollector.makeCompilationFailureResult(): ExecutionResult<List<File>>
     ExecutionResult.Failure(ExitCode.COMPILATION_ERROR, emptyList())
 
 internal fun K2JVMCompilerArguments.toCompilerConfiguration(collector: MessageCollector): CompilerConfiguration {
-    val paths = computeKotlinPaths(this, collector)
+    val paths = computeKotlinPaths(collector, this)
 
     return CompilerConfiguration().apply {
         put(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, collector)
@@ -69,7 +69,7 @@ internal fun K2JVMCompilerArguments.toCompilerConfiguration(collector: MessageCo
         loadPlugins(this@toCompilerConfiguration, paths)
 
         configureJdkHome(this@toCompilerConfiguration)
-        configureStandardLibs(this@toCompilerConfiguration, paths)
+        configureStandardLibs(paths, this@toCompilerConfiguration)
         configureExplicitContentRoots(this@toCompilerConfiguration)
         configureAdvancedJvmOptions(this@toCompilerConfiguration)
     }
@@ -107,7 +107,7 @@ internal fun <A : CommonCompilerArguments> CompilerConfiguration.loadPlugins(
                     tryLoadScriptingPluginFromCurrentClassLoader(this)
         val messageCollector = getNotNull(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY)
         if (!explicitOrLoadedScriptingPlugin) {
-            val kotlinPaths = paths ?: computeKotlinPaths(arguments, messageCollector) ?: PathUtil.kotlinPathsForCompiler
+            val kotlinPaths = paths ?: computeKotlinPaths(messageCollector, arguments) ?: PathUtil.kotlinPathsForCompiler
             val libPath = kotlinPaths.libPath.takeIf { it.exists() && it.isDirectory } ?: File(".")
             val (jars, missingJars) =
                 PathUtil.KOTLIN_SCRIPTING_PLUGIN_CLASSPATH_JARS.map { File(libPath, it) }.partition { it.exists() }
@@ -126,19 +126,5 @@ internal fun <A : CommonCompilerArguments> CompilerConfiguration.loadPlugins(
         pluginOptions.add("plugin:kotlin.scripting:disable=true")
     }
     return PluginCliParser.loadPluginsSafe(pluginClasspaths, pluginOptions, this)
-}
-
-internal fun tryLoadScriptingPluginFromCurrentClassLoader(configuration: CompilerConfiguration): Boolean = try {
-    val pluginRegistrarClass = PluginCliParser::class.java.classLoader.loadClass(
-        "org.jetbrains.kotlin.scripting.compiler.plugin.ScriptingCompilerConfigurationComponentRegistrar"
-    )
-    val pluginRegistrar = pluginRegistrarClass.newInstance() as? ComponentRegistrar
-    if (pluginRegistrar != null) {
-        configuration.add(ComponentRegistrar.PLUGIN_COMPONENT_REGISTRARS, pluginRegistrar)
-        true
-    } else false
-} catch (_: Throwable) {
-    // TODO: add finer error processing and logging
-    false
 }
 

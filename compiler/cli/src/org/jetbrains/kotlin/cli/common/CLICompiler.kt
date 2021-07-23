@@ -27,7 +27,6 @@ import org.jetbrains.kotlin.cli.common.environment.setIdeaIoUseFallback
 import org.jetbrains.kotlin.cli.common.messages.*
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.INFO
 import org.jetbrains.kotlin.cli.jvm.plugins.PluginCliParser
-import org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.Services
 import org.jetbrains.kotlin.ir.util.IrMessageLogger
@@ -75,7 +74,7 @@ abstract class CLICompiler<A : CommonCompilerArguments> : CLITool<A>() {
 
         configuration.put(CLIConfigurationKeys.PERF_MANAGER, performanceManager)
         try {
-            setupCommonArguments(configuration, arguments)
+            configuration.setupCommonArguments(arguments, this::createMetadataVersion)
             setupPlatformSpecificArgumentsAndServices(configuration, arguments, services)
             val paths = computeKotlinPaths(collector, arguments)
             if (collector.hasErrors()) {
@@ -134,10 +133,6 @@ abstract class CLICompiler<A : CommonCompilerArguments> : CLITool<A>() {
         }
     }
 
-    private fun setupCommonArguments(configuration: CompilerConfiguration, arguments: A) {
-        configuration.setupCommonArguments(arguments, this::createMetadataVersion)
-    }
-
     protected abstract fun createMetadataVersion(versionArray: IntArray): BinaryVersion
 
     protected abstract fun setupPlatformSpecificArgumentsAndServices(
@@ -181,20 +176,6 @@ abstract class CLICompiler<A : CommonCompilerArguments> : CLITool<A>() {
             pluginOptions.add("plugin:kotlin.scripting:disable=true")
         }
         return PluginCliParser.loadPluginsSafe(pluginClasspaths, pluginOptions, configuration)
-    }
-
-    private fun tryLoadScriptingPluginFromCurrentClassLoader(configuration: CompilerConfiguration): Boolean = try {
-        val pluginRegistrarClass = PluginCliParser::class.java.classLoader.loadClass(
-            "org.jetbrains.kotlin.scripting.compiler.plugin.ScriptingCompilerConfigurationComponentRegistrar"
-        )
-        val pluginRegistrar = pluginRegistrarClass.newInstance() as? ComponentRegistrar
-        if (pluginRegistrar != null) {
-            configuration.add(ComponentRegistrar.PLUGIN_COMPONENT_REGISTRARS, pluginRegistrar)
-            true
-        } else false
-    } catch (_: Throwable) {
-        // TODO: add finer error processing and logging
-        false
     }
 }
 

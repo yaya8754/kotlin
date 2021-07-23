@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.ir.backend.js.expectActualLinker
 import org.jetbrains.kotlin.ir.backend.js.serializeModuleIntoKlib
 import org.jetbrains.kotlin.ir.util.IrMessageLogger
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
+import org.jetbrains.kotlin.library.KotlinAbiVersion
 
 class ClassicJsKLibGeneratorResult
 
@@ -25,8 +26,12 @@ class ClassicJsKLibGeneratorBuilder : CompilationStageBuilder<FrontendToIrConver
 
     var nopack: Boolean? = null
 
+    var abiVersion: KotlinAbiVersion = KotlinAbiVersion.CURRENT
+
+    var jsOutputName: String? = null
+
     override fun build(): CompilationStage<FrontendToIrConverterResult, ClassicJsKLibGeneratorResult> {
-        return ClassicJsKLibGenerator(outputKlibPath!!, nopack!!)
+        return ClassicJsKLibGenerator(outputKlibPath!!, nopack!!, abiVersion, jsOutputName)
     }
 
     operator fun invoke(body: ClassicJsKLibGeneratorBuilder.() -> Unit): ClassicJsKLibGeneratorBuilder {
@@ -37,7 +42,9 @@ class ClassicJsKLibGeneratorBuilder : CompilationStageBuilder<FrontendToIrConver
 
 class ClassicJsKLibGenerator internal constructor(
     val outputKlibPath: String,
-    val nopack: Boolean
+    val nopack: Boolean,
+    var abiVersion: KotlinAbiVersion,
+    var jsOutputName: String?
 ) : CompilationStage<FrontendToIrConverterResult, ClassicJsKLibGeneratorResult> {
 
     override fun execute(
@@ -63,13 +70,15 @@ class ClassicJsKLibGenerator internal constructor(
             bindingContext ?: error(""),
             files,
             outputKlibPath,
-            dependenciesList,
+            dependenciesList.map { it.library },
             moduleFragment,
             expectDescriptorToSymbol,
             icData,
             nopack,
             perFile = false,
-            hasErrors
+            hasErrors,
+            abiVersion,
+            jsOutputName
         )
 
 

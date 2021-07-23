@@ -143,7 +143,7 @@ fun oldFeOldBeCompile(args: List<String>, outStream: PrintStream): ExecutionResu
                 findMainClass(feRes.value.first.bindingContext, configuration.languageVersionSettings, environment.getSourceFiles())
             else null
 
-        KotlinToJVMBytecodeCompiler.writeOutput(configuration, beRes.value.factory, mainClassFqName)
+        writeOutput(configuration, beRes.value.factory, mainClassFqName)
 
         if (collector.hasErrors()) return collector.makeCompilationFailureResult()
 

@@ -117,7 +117,7 @@ inline fun <R> withIC(enabled: Boolean = true, fn: () -> R): R {
     }
 }
 
-class IncrementalJvmCompilerRunner(
+open class IncrementalJvmCompilerRunner(
     workingDir: File,
     reporter: BuildReporter,
     private val usePreciseJavaTracking: Boolean,

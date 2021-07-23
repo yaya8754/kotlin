@@ -13,10 +13,11 @@ package org.jetbrains.kotlin.cli.fir
 import org.jetbrains.kotlin.backend.jvm.JvmGeneratorExtensionsImpl
 import org.jetbrains.kotlin.backend.jvm.serialization.JvmIdSignatureDescriptor
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
+import org.jetbrains.kotlin.cli.jvm.compiler.NoScopeRecordCliBindingTrace
 import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.fir.backend.Fir2IrConverter
 import org.jetbrains.kotlin.fir.backend.jvm.*
-import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmManglerDesc
+import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmDescriptorMangler
 import org.jetbrains.kotlin.ir.declarations.IrFactory
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
 
@@ -42,11 +43,11 @@ class FirJvmFrontendToIrConverter internal constructor(
     override fun execute(
         input: FirFrontendOutputs
     ): ExecutionResult<FrontendToIrConverterResult> {
-        val signaturer = JvmIdSignatureDescriptor(JvmManglerDesc())
+        val signaturer = JvmIdSignatureDescriptor(JvmDescriptorMangler(null))
         val (moduleFragment, symbolTable, components) = Fir2IrConverter.createModuleFragment(
             input.session, input.scopeSession!!, input.firFiles!!,
             input.configuration.languageVersionSettings, signaturer,
-            JvmGeneratorExtensionsImpl(generateFacades = true), FirJvmKotlinMangler(input.session), irFactory,
+            JvmGeneratorExtensionsImpl(input.configuration, generateFacades = true), FirJvmKotlinMangler(input.session), irFactory,
             FirJvmVisibilityConverter,
             Fir2IrJvmSpecialAnnotationSymbolProvider()
         )
@@ -63,7 +64,7 @@ class FirJvmFrontendToIrConverter internal constructor(
             input.module,
             FirJvmBackendClassResolver(components),
             FirJvmBackendExtension(input.session, components),
-            input.packagePartProvider
+            NoScopeRecordCliBindingTrace().bindingContext
         )
 
         return ExecutionResult.Success(outputs, emptyList())

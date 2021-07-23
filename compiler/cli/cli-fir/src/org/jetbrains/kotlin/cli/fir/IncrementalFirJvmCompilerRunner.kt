@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.compilerRunner.MessageCollectorToOutputItemsCollecto
 import org.jetbrains.kotlin.compilerRunner.OutputItemsCollectorImpl
 import org.jetbrains.kotlin.compilerRunner.SimpleOutputItem
 import org.jetbrains.kotlin.compilerRunner.toGeneratedFile
-import org.jetbrains.kotlin.config.Services
 import org.jetbrains.kotlin.incremental.*
 import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.incremental.multiproject.EmptyModulesApiHistory
@@ -45,12 +44,16 @@ class IncrementalFirJvmCompilerRunner(
     workingDir, reporter, usePreciseJavaTracking, buildHistoryFile, outputFiles, modulesApiHistory, kotlinSourceFilesExtensions
 )
 {
+
     override fun compileIncrementally(
         args: K2JVMCompilerArguments,
         caches: IncrementalJvmCachesManager,
         allKotlinSources: List<File>,
         compilationMode: CompilationMode,
-        originalMessageCollector: MessageCollector
+        originalMessageCollector: MessageCollector,
+        withSnapshot: Boolean,
+        abiSnapshot: AbiSnapshot,
+        classpathAbiSnapshot: Map<String, AbiSnapshot>
     ): ExitCode {
         preBuildHook(args, compilationMode)
 

@@ -88,7 +88,7 @@ class CompilationPipelineTest : KotlinIntegrationTestBase() {
 internal inline fun <T> compileWithOutput(body: (PrintStream) -> T): Pair<T, String> {
     ByteArrayOutputStream().use { bos ->
         val (_, cerr, res) = captureOutErrRet { body(PrintStream(bos)) }
-        assertFalse(cerr.contains("error", ignoreCase = true))
+        assertFalse(cerr.contains("error", ignoreCase = true), cerr)
         return res to bos.toString().trim()
     }
 }

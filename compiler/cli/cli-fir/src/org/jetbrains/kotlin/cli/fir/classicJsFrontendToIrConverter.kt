@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.backend.common.serialization.mangle.ManglerChecker
 import org.jetbrains.kotlin.backend.common.serialization.mangle.descriptor.Ir2DescriptorManglerAdapter
 import org.jetbrains.kotlin.backend.common.serialization.signature.IdSignatureDescriptor
 import org.jetbrains.kotlin.backend.jvm.JvmBackendExtension
+import org.jetbrains.kotlin.cli.jvm.compiler.NoScopeRecordCliBindingTrace
 import org.jetbrains.kotlin.codegen.JvmBackendClassResolver
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.languageVersionSettings
@@ -30,15 +31,13 @@ import org.jetbrains.kotlin.ir.backend.js.sortDependencies
 import org.jetbrains.kotlin.ir.declarations.IrFactory
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.declarations.persistent.PersistentIrFactory
-import org.jetbrains.kotlin.ir.descriptors.IrFunctionFactory
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.util.IrMessageLogger
 import org.jetbrains.kotlin.ir.util.SymbolTable
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import org.jetbrains.kotlin.js.config.ErrorTolerancePolicy
 import org.jetbrains.kotlin.js.config.JSConfigurationKeys
-import org.jetbrains.kotlin.library.KotlinLibrary
-import org.jetbrains.kotlin.load.kotlin.PackagePartProvider
+import org.jetbrains.kotlin.library.resolver.KotlinResolvedLibrary
 import org.jetbrains.kotlin.modules.Module
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi2ir.Psi2IrConfiguration
@@ -52,14 +51,14 @@ data class FrontendToIrConverterResult(
     val bindingContext: BindingContext?,
     val project: Project,
     val sourceFiles: List<KtFile>,
-    val dependenciesList: List<KotlinLibrary>,
+    val dependenciesList: List<KotlinResolvedLibrary>,
     val expectDescriptorToSymbol: MutableMap<DeclarationDescriptor, IrSymbol>,
     val hasErrors: Boolean,
     val configuration: CompilerConfiguration,
     val module: Module?,
     val jvmBackendClassResolver: JvmBackendClassResolver?,
     val backendExtensions: JvmBackendExtension?,
-    val packagePartProvider: PackagePartProvider?
+    val frontendBindingContext: BindingContext
 )
 
 class ClassicJsFrontendToIrConverterBuilder : CompilationStageBuilder<ClassicJsFrontendResult, FrontendToIrConverterResult> {
@@ -99,8 +98,6 @@ class ClassicJsFrontendToIrConverter internal constructor(
             psi2Ir.createGeneratorContext(input.analysisResult.moduleDescriptor, input.analysisResult.bindingContext, symbolTable)
 
         val irBuiltIns = psi2IrContext.irBuiltIns
-        val functionFactory = IrFunctionFactory(irBuiltIns, psi2IrContext.symbolTable)
-        irBuiltIns.functionFactory = functionFactory
 
         val expectDescriptorToSymbol = mutableMapOf<DeclarationDescriptor, IrSymbol>()
         val feContext = psi2IrContext.run {
@@ -114,12 +111,11 @@ class ClassicJsFrontendToIrConverter internal constructor(
             messageLogger,
             psi2IrContext.irBuiltIns,
             psi2IrContext.symbolTable,
-            functionFactory,
             feContext,
             serializedIrFiles?.let { ICData(it, errorPolicy.allowErrors) }
         )
 
-        val dependenciesList = input.descriptors.allDependencies.getFullList()
+        val dependenciesList = input.descriptors.allDependencies
 
         sortDependencies(dependenciesList, input.descriptors.descriptors).map {
             irLinker.deserializeOnlyHeaderModule(input.descriptors.getModuleDescriptor(it), it)
@@ -151,7 +147,7 @@ class ClassicJsFrontendToIrConverter internal constructor(
                 module = null,
                 jvmBackendClassResolver = null,
                 backendExtensions = null,
-                packagePartProvider = null
+                frontendBindingContext = NoScopeRecordCliBindingTrace().bindingContext
             ),
             emptyList()
         )

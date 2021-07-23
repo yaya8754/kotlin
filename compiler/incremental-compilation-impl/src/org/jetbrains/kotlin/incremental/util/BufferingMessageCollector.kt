@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import java.util.ArrayList
 
-internal class BufferingMessageCollector : MessageCollector {
+class BufferingMessageCollector : MessageCollector {
     private class Message(val severity: CompilerMessageSeverity, val message: String, val location: CompilerMessageSourceLocation?)
 
     private val messages = ArrayList<Message>()

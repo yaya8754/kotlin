@@ -347,98 +347,8 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
         arguments: K2JSCompilerArguments,
         services: Services
     ) {
-        val messageCollector = configuration.getNotNull(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY)
-
-        if (arguments.target != null) {
-            assert("v5" == arguments.target) { "Unsupported ECMA version: " + arguments.target!! }
-        }
-        configuration.put(JSConfigurationKeys.TARGET, EcmaVersion.defaultVersion())
-
-        if (arguments.sourceMap) {
-            configuration.put(JSConfigurationKeys.SOURCE_MAP, true)
-            if (arguments.sourceMapPrefix != null) {
-                configuration.put(JSConfigurationKeys.SOURCE_MAP_PREFIX, arguments.sourceMapPrefix!!)
-            }
-
-            var sourceMapSourceRoots = arguments.sourceMapBaseDirs
-            if (sourceMapSourceRoots == null && StringUtil.isNotEmpty(arguments.sourceMapPrefix)) {
-                sourceMapSourceRoots = K2JSCompiler.calculateSourceMapSourceRoot(messageCollector, arguments)
-            }
-
-            if (sourceMapSourceRoots != null) {
-                val sourceMapSourceRootList = StringUtil.split(sourceMapSourceRoots, File.pathSeparator)
-                configuration.put(JSConfigurationKeys.SOURCE_MAP_SOURCE_ROOTS, sourceMapSourceRootList)
-            }
-
-        } else {
-            if (arguments.sourceMapPrefix != null) {
-                messageCollector.report(WARNING, "source-map-prefix argument has no effect without source map", null)
-            }
-            if (arguments.sourceMapBaseDirs != null) {
-                messageCollector.report(WARNING, "source-map-source-root argument has no effect without source map", null)
-            }
-        }
-
-        if (arguments.metaInfo) {
-            configuration.put(JSConfigurationKeys.META_INFO, true)
-        }
-
-        configuration.put(JSConfigurationKeys.TYPED_ARRAYS_ENABLED, arguments.typedArrays)
-
-        configuration.put(JSConfigurationKeys.FRIEND_PATHS_DISABLED, arguments.friendModulesDisabled)
-
-        val friendModules = arguments.friendModules
-        if (!arguments.friendModulesDisabled && friendModules != null) {
-            val friendPaths = friendModules
-                .split(File.pathSeparator.toRegex())
-                .dropLastWhile { it.isEmpty() }
-                .filterNot { it.isEmpty() }
-
-            configuration.put(JSConfigurationKeys.FRIEND_PATHS, friendPaths)
-        }
-
-        val moduleKindName = arguments.moduleKind
-        var moduleKind: ModuleKind? = if (moduleKindName != null) moduleKindMap[moduleKindName] else ModuleKind.PLAIN
-        if (moduleKind == null) {
-            messageCollector.report(
-                ERROR, "Unknown module kind: $moduleKindName. Valid values are: plain, amd, commonjs, umd", null
-            )
-            moduleKind = ModuleKind.PLAIN
-        }
-        configuration.put(JSConfigurationKeys.MODULE_KIND, moduleKind)
-
-        configuration.putIfNotNull(JSConfigurationKeys.INCREMENTAL_DATA_PROVIDER, services[IncrementalDataProvider::class.java])
-        configuration.putIfNotNull(JSConfigurationKeys.INCREMENTAL_RESULTS_CONSUMER, services[IncrementalResultsConsumer::class.java])
-        configuration.putIfNotNull(JSConfigurationKeys.INCREMENTAL_NEXT_ROUND_CHECKER, services[IncrementalNextRoundChecker::class.java])
-        configuration.putIfNotNull(CommonConfigurationKeys.LOOKUP_TRACKER, services[LookupTracker::class.java])
-        configuration.putIfNotNull(CommonConfigurationKeys.EXPECT_ACTUAL_TRACKER, services[ExpectActualTracker::class.java])
-
-        val errorTolerancePolicy = arguments.errorTolerancePolicy?.let { ErrorTolerancePolicy.resolvePolicy(it) }
-        configuration.putIfNotNull(JSConfigurationKeys.ERROR_TOLERANCE_POLICY, errorTolerancePolicy)
-
-        if (errorTolerancePolicy?.allowErrors == true) {
-            configuration.put(JSConfigurationKeys.DEVELOPER_MODE, true)
-        }
-
-        val sourceMapEmbedContentString = arguments.sourceMapEmbedSources
-        var sourceMapContentEmbedding: SourceMapSourceEmbedding? = if (sourceMapEmbedContentString != null)
-            sourceMapContentEmbeddingMap[sourceMapEmbedContentString]
-        else
-            SourceMapSourceEmbedding.INLINING
-        if (sourceMapContentEmbedding == null) {
-            val message = "Unknown source map source embedding mode: " + sourceMapEmbedContentString + ". Valid values are: " +
-                    StringUtil.join(sourceMapContentEmbeddingMap.keys, ", ")
-            messageCollector.report(ERROR, message, null)
-            sourceMapContentEmbedding = SourceMapSourceEmbedding.INLINING
-        }
-        configuration.put(JSConfigurationKeys.SOURCE_MAP_EMBED_SOURCES, sourceMapContentEmbedding)
-
-        if (!arguments.sourceMap && sourceMapEmbedContentString != null) {
-            messageCollector.report(WARNING, "source-map-embed-sources argument has no effect without source map", null)
-        }
-
-        configuration.put(JSConfigurationKeys.PRINT_REACHABILITY_INFO, arguments.irDcePrintReachabilityInfo)
-        configuration.put(JSConfigurationKeys.FAKE_OVERRIDE_VALIDATOR, arguments.fakeOverrideValidator)
+        configuration.setupJsSpecificArguments(arguments)
+        configuration.setupJsSpecificServices(services)
     }
 
     override fun executableScriptFileName(): String {
@@ -452,17 +362,6 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
     override fun MutableList<String>.addPlatformOptions(arguments: K2JSCompilerArguments) {}
 
     companion object {
-        private val moduleKindMap = mapOf(
-            K2JsArgumentConstants.MODULE_PLAIN to ModuleKind.PLAIN,
-            K2JsArgumentConstants.MODULE_COMMONJS to ModuleKind.COMMON_JS,
-            K2JsArgumentConstants.MODULE_AMD to ModuleKind.AMD,
-            K2JsArgumentConstants.MODULE_UMD to ModuleKind.UMD
-        )
-        private val sourceMapContentEmbeddingMap = mapOf(
-            K2JsArgumentConstants.SOURCE_MAP_SOURCE_CONTENT_ALWAYS to SourceMapSourceEmbedding.ALWAYS,
-            K2JsArgumentConstants.SOURCE_MAP_SOURCE_CONTENT_NEVER to SourceMapSourceEmbedding.NEVER,
-            K2JsArgumentConstants.SOURCE_MAP_SOURCE_CONTENT_INLINING to SourceMapSourceEmbedding.INLINING
-        )
         private val produceMap = mapOf(
             null to ProduceKind.DEFAULT,
             "js" to ProduceKind.JS,
@@ -497,6 +396,116 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
         }
     }
 }
+
+fun CompilerConfiguration.setupJsSpecificArguments(arguments: K2JSCompilerArguments) {
+    val messageCollector = getNotNull(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY)
+
+    if (arguments.target != null) {
+        assert("v5" == arguments.target) { "Unsupported ECMA version: " + arguments.target!! }
+    }
+    put(JSConfigurationKeys.TARGET, EcmaVersion.defaultVersion())
+
+    if (arguments.sourceMap) {
+        put(JSConfigurationKeys.SOURCE_MAP, true)
+        if (arguments.sourceMapPrefix != null) {
+            put(JSConfigurationKeys.SOURCE_MAP_PREFIX, arguments.sourceMapPrefix!!)
+        }
+
+        var sourceMapSourceRoots = arguments.sourceMapBaseDirs
+        if (sourceMapSourceRoots == null && StringUtil.isNotEmpty(arguments.sourceMapPrefix)) {
+            sourceMapSourceRoots = K2JSCompiler.calculateSourceMapSourceRoot(messageCollector, arguments)
+        }
+
+        if (sourceMapSourceRoots != null) {
+            val sourceMapSourceRootList = StringUtil.split(sourceMapSourceRoots, File.pathSeparator)
+            put(JSConfigurationKeys.SOURCE_MAP_SOURCE_ROOTS, sourceMapSourceRootList)
+        }
+
+    } else {
+        if (arguments.sourceMapPrefix != null) {
+            messageCollector.report(WARNING, "source-map-prefix argument has no effect without source map", null)
+        }
+        if (arguments.sourceMapBaseDirs != null) {
+            messageCollector.report(WARNING, "source-map-source-root argument has no effect without source map", null)
+        }
+    }
+
+    if (arguments.metaInfo) {
+        put(JSConfigurationKeys.META_INFO, true)
+    }
+
+    put(JSConfigurationKeys.TYPED_ARRAYS_ENABLED, arguments.typedArrays)
+
+    put(JSConfigurationKeys.FRIEND_PATHS_DISABLED, arguments.friendModulesDisabled)
+
+    val friendModules = arguments.friendModules
+    if (!arguments.friendModulesDisabled && friendModules != null) {
+        val friendPaths = friendModules
+            .split(File.pathSeparator.toRegex())
+            .dropLastWhile { it.isEmpty() }
+            .filterNot { it.isEmpty() }
+
+        put(JSConfigurationKeys.FRIEND_PATHS, friendPaths)
+    }
+
+    val moduleKindName = arguments.moduleKind
+    var moduleKind: ModuleKind? = if (moduleKindName != null) K2JS_MODULE_KIND_MAP[moduleKindName] else ModuleKind.PLAIN
+    if (moduleKind == null) {
+        messageCollector.report(
+            ERROR, "Unknown module kind: $moduleKindName. Valid values are: plain, amd, commonjs, umd", null
+        )
+        moduleKind = ModuleKind.PLAIN
+    }
+    put(JSConfigurationKeys.MODULE_KIND, moduleKind)
+
+    val errorTolerancePolicy = arguments.errorTolerancePolicy?.let { ErrorTolerancePolicy.resolvePolicy(it) }
+    putIfNotNull(JSConfigurationKeys.ERROR_TOLERANCE_POLICY, errorTolerancePolicy)
+
+    if (errorTolerancePolicy?.allowErrors == true) {
+        put(JSConfigurationKeys.DEVELOPER_MODE, true)
+    }
+
+    val sourceMapEmbedContentString = arguments.sourceMapEmbedSources
+    var sourceMapContentEmbedding: SourceMapSourceEmbedding? = if (sourceMapEmbedContentString != null)
+        K2JS_SOURCE_MAP_CONTENT_EMBEDDING_MAP[sourceMapEmbedContentString]
+    else
+        SourceMapSourceEmbedding.INLINING
+    if (sourceMapContentEmbedding == null) {
+        val message = "Unknown source map source embedding mode: " + sourceMapEmbedContentString + ". Valid values are: " +
+                StringUtil.join(K2JS_SOURCE_MAP_CONTENT_EMBEDDING_MAP.keys, ", ")
+        messageCollector.report(ERROR, message, null)
+        sourceMapContentEmbedding = SourceMapSourceEmbedding.INLINING
+    }
+    put(JSConfigurationKeys.SOURCE_MAP_EMBED_SOURCES, sourceMapContentEmbedding)
+
+    if (!arguments.sourceMap && sourceMapEmbedContentString != null) {
+        messageCollector.report(WARNING, "source-map-embed-sources argument has no effect without source map", null)
+    }
+
+    put(JSConfigurationKeys.PRINT_REACHABILITY_INFO, arguments.irDcePrintReachabilityInfo)
+    put(JSConfigurationKeys.FAKE_OVERRIDE_VALIDATOR, arguments.fakeOverrideValidator)
+}
+
+fun CompilerConfiguration.setupJsSpecificServices(services: Services) {
+    putIfNotNull(JSConfigurationKeys.INCREMENTAL_DATA_PROVIDER, services[IncrementalDataProvider::class.java])
+    putIfNotNull(JSConfigurationKeys.INCREMENTAL_RESULTS_CONSUMER, services[IncrementalResultsConsumer::class.java])
+    putIfNotNull(JSConfigurationKeys.INCREMENTAL_NEXT_ROUND_CHECKER, services[IncrementalNextRoundChecker::class.java])
+    putIfNotNull(CommonConfigurationKeys.LOOKUP_TRACKER, services[LookupTracker::class.java])
+    putIfNotNull(CommonConfigurationKeys.EXPECT_ACTUAL_TRACKER, services[ExpectActualTracker::class.java])
+}
+
+private val K2JS_MODULE_KIND_MAP = mapOf(
+    K2JsArgumentConstants.MODULE_PLAIN to ModuleKind.PLAIN,
+    K2JsArgumentConstants.MODULE_COMMONJS to ModuleKind.COMMON_JS,
+    K2JsArgumentConstants.MODULE_AMD to ModuleKind.AMD,
+    K2JsArgumentConstants.MODULE_UMD to ModuleKind.UMD
+)
+
+private val K2JS_SOURCE_MAP_CONTENT_EMBEDDING_MAP = mapOf(
+    K2JsArgumentConstants.SOURCE_MAP_SOURCE_CONTENT_ALWAYS to SourceMapSourceEmbedding.ALWAYS,
+    K2JsArgumentConstants.SOURCE_MAP_SOURCE_CONTENT_NEVER to SourceMapSourceEmbedding.NEVER,
+    K2JsArgumentConstants.SOURCE_MAP_SOURCE_CONTENT_INLINING to SourceMapSourceEmbedding.INLINING
+)
 
 fun RuntimeDiagnostic.Companion.resolve(
     value: String?,

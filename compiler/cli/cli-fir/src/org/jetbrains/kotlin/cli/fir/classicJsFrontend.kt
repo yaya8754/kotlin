@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.cli.common.config.addKotlinSourceRoot
 import org.jetbrains.kotlin.cli.common.messages.*
 import org.jetbrains.kotlin.cli.common.setupCommonArguments
-import org.jetbrains.kotlin.cli.js.messageCollectorLogger
 import org.jetbrains.kotlin.cli.js.setupJsSpecificArguments
 import org.jetbrains.kotlin.cli.js.setupJsSpecificServices
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
@@ -29,9 +28,7 @@ import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.Services
 import org.jetbrains.kotlin.config.languageVersionSettings
-import org.jetbrains.kotlin.ir.backend.js.MainModule
-import org.jetbrains.kotlin.ir.backend.js.ModulesStructure
-import org.jetbrains.kotlin.ir.backend.js.jsResolveLibraries
+import org.jetbrains.kotlin.ir.backend.js.*
 import org.jetbrains.kotlin.js.config.ErrorTolerancePolicy
 import org.jetbrains.kotlin.js.config.JSConfigurationKeys
 import org.jetbrains.kotlin.psi.KtFile
@@ -89,24 +86,13 @@ class ClassicJsFrontend internal constructor(
 
         val libraries = configuration.getList(JSConfigurationKeys.LIBRARIES)
 
-        val resolvedLibraries = jsResolveLibraries(
-            libraries,
-            emptyList(),
-            messageCollectorLogger(messageCollector)
-        )
-
-        val friendAbsolutePaths = friendLibraries.map { File(it).absolutePath }
-        val friendDependencies = resolvedLibraries.getFullList().filter {
-            it.libraryFile.absolutePath in friendAbsolutePaths
-        }
-
         val descriptors = ModulesStructure(
             project,
             MainModule.SourceFiles(sourceFiles),
             analyzer,
             configuration,
-            resolvedLibraries,
-            friendDependencies
+            libraries,
+            friendLibraries
         )
 
         val analysisResult = descriptors.runAnalysis(configuration.get(JSConfigurationKeys.ERROR_TOLERANCE_POLICY) ?: ErrorTolerancePolicy.DEFAULT)

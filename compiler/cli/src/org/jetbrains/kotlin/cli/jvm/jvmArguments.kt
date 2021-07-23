@@ -5,16 +5,19 @@
 
 package org.jetbrains.kotlin.cli.jvm
 
+import com.intellij.ide.highlighter.JavaFileType
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.getLibraryFromHome
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.*
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
+import org.jetbrains.kotlin.cli.common.modules.ModuleBuilder
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.cli.jvm.config.JvmClasspathRoot
 import org.jetbrains.kotlin.cli.jvm.config.JvmModulePathRoot
 import org.jetbrains.kotlin.cli.jvm.modules.CoreJrtFileSystem
 import org.jetbrains.kotlin.config.*
+import org.jetbrains.kotlin.modules.JavaRootPath
 import org.jetbrains.kotlin.utils.KotlinPaths
 import org.jetbrains.kotlin.utils.PathUtil
 import java.io.File
@@ -310,3 +313,29 @@ fun CompilerConfiguration.configureKlibPaths(arguments: K2JVMCompilerArguments) 
 
 private val CompilerConfiguration.messageCollector: MessageCollector
     get() = getNotNull(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY)
+
+
+fun ModuleBuilder.configureFromArgs(args: K2JVMCompilerArguments) {
+    args.friendPaths?.forEach { addFriendDir(it) }
+    args.classpath?.split(File.pathSeparator)?.forEach { addClasspathEntry(it) }
+    args.javaSourceRoots?.forEach {
+        addJavaSourceRoot(JavaRootPath(it, args.javaPackagePrefix))
+    }
+
+    val commonSources = args.commonSources?.toSet().orEmpty()
+    for (arg in args.freeArgs) {
+        if (arg.endsWith(JavaFileType.DOT_DEFAULT_EXTENSION)) {
+            addJavaSourceRoot(JavaRootPath(arg, args.javaPackagePrefix))
+        } else {
+            addSourceFiles(arg)
+            if (arg in commonSources) {
+                addCommonSourceFiles(arg)
+            }
+
+            if (File(arg).isDirectory) {
+                addJavaSourceRoot(JavaRootPath(arg, args.javaPackagePrefix))
+            }
+        }
+    }
+}
+

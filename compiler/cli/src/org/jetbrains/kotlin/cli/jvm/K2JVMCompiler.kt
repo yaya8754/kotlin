@@ -16,7 +16,6 @@
 
 package org.jetbrains.kotlin.cli.jvm
 
-import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.Disposable
 import org.jetbrains.kotlin.backend.jvm.jvmPhases
 import org.jetbrains.kotlin.cli.common.*
@@ -45,7 +44,6 @@ import org.jetbrains.kotlin.load.kotlin.incremental.components.IncrementalCompil
 import org.jetbrains.kotlin.metadata.deserialization.BinaryVersion
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmMetadataVersion
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
-import org.jetbrains.kotlin.modules.JavaRootPath
 import org.jetbrains.kotlin.utils.KotlinPaths
 import java.io.File
 
@@ -175,30 +173,6 @@ class K2JVMCompiler : CLICompiler<K2JVMCompilerArguments>() {
                 MessageUtil.psiElementToMessageLocation(e.element)
             )
             return INTERNAL_ERROR
-        }
-    }
-
-    private fun ModuleBuilder.configureFromArgs(args: K2JVMCompilerArguments) {
-        args.friendPaths?.forEach { addFriendDir(it) }
-        args.classpath?.split(File.pathSeparator)?.forEach { addClasspathEntry(it) }
-        args.javaSourceRoots?.forEach {
-            addJavaSourceRoot(JavaRootPath(it, args.javaPackagePrefix))
-        }
-
-        val commonSources = args.commonSources?.toSet().orEmpty()
-        for (arg in args.freeArgs) {
-            if (arg.endsWith(JavaFileType.DOT_DEFAULT_EXTENSION)) {
-                addJavaSourceRoot(JavaRootPath(arg, args.javaPackagePrefix))
-            } else {
-                addSourceFiles(arg)
-                if (arg in commonSources) {
-                    addCommonSourceFiles(arg)
-                }
-
-                if (File(arg).isDirectory) {
-                    addJavaSourceRoot(JavaRootPath(arg, args.javaPackagePrefix))
-                }
-            }
         }
     }
 

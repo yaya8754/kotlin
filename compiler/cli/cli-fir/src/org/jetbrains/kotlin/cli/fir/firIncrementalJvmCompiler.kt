@@ -12,7 +12,6 @@
 
 package org.jetbrains.kotlin.cli.fir
 
-import com.intellij.psi.search.ProjectScope
 import org.jetbrains.kotlin.cli.common.messages.GroupingMessageCollector
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
@@ -22,7 +21,7 @@ import java.io.PrintStream
 
 private fun firCompileIncrementally(
     args: List<String>,
-    cachesDir: File,
+    @Suppress("UNUSED_PARAMETER") cachesDir: File,
     outStream: PrintStream
 ): ExecutionResult<List<File>> {
 
@@ -54,7 +53,7 @@ private fun firCompileIncrementally(
             this.messageCollector = collector
             this.configuration = configuration
             this.project = environment.project
-            this.packagePartProvider = environment.createPackagePartProvider(ProjectScope.getLibrariesScope(project!!))
+            this.getPackagePartProvider = { environment.createPackagePartProvider(it) }
         }
 
         val fir2ir = session.buildJvmFirToIrConverter {

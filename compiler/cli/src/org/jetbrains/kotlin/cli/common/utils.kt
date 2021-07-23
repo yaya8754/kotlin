@@ -20,6 +20,9 @@ import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.common.messages.MessageUtil
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
+import org.jetbrains.kotlin.cli.jvm.plugins.PluginCliParser
+import org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar
+import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.isSubpackageOf
 import org.jetbrains.kotlin.psi.KtFile
@@ -33,6 +36,10 @@ fun checkKotlinPackageUsage(environment: KotlinCoreEnvironment, files: Collectio
         return true
     }
     val messageCollector = environment.configuration.get(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, MessageCollector.NONE)
+    return checkKotlinPackageUsage(messageCollector, files)
+}
+
+fun checkKotlinPackageUsage(messageCollector: MessageCollector, files: Collection<KtFile>): Boolean {
     val kotlinPackage = FqName("kotlin")
     for (file in files) {
         if (file.packageFqName.isSubpackageOf(kotlinPackage)) {
@@ -88,3 +95,17 @@ fun MessageCollector.toLogger(): Logger =
             report(CompilerMessageSeverity.LOGGING, message)
         }
     }
+
+fun tryLoadScriptingPluginFromCurrentClassLoader(configuration: CompilerConfiguration): Boolean = try {
+    val pluginRegistrarClass = PluginCliParser::class.java.classLoader.loadClass(
+        "org.jetbrains.kotlin.scripting.compiler.plugin.ScriptingCompilerConfigurationComponentRegistrar"
+    )
+    val pluginRegistrar = pluginRegistrarClass.newInstance() as? ComponentRegistrar
+    if (pluginRegistrar != null) {
+        configuration.add(ComponentRegistrar.PLUGIN_COMPONENT_REGISTRARS, pluginRegistrar)
+        true
+    } else false
+} catch (_: Throwable) {
+    // TODO: add finer error processing and logging
+    false
+}
