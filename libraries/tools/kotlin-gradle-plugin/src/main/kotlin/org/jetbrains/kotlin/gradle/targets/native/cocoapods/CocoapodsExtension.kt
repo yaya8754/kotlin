@@ -256,21 +256,20 @@ open class CocoapodsExtension(private val project: Project) {
         }
         pods.all { pod ->
             binary.linkerOpts("-framework", pod.moduleName)
-            if (project.shouldUseSyntheticProjectSettings &&
-                KotlinCocoapodsPlugin.isAvailableToProduceSynthetic
-            ) {
-                binary.linkTaskProvider.configure { task ->
 
-                    val podBuildTaskProvider = project.getPodBuildTaskProvider(binary.target, pod)
-                    task.inputs.file(podBuildTaskProvider.map { it.buildSettingsFile })
-                    task.dependsOn(podBuildTaskProvider)
+            check(KotlinCocoapodsPlugin.isAvailableToProduceSynthetic) { "cocoapods-generate plugin is not installed" }
 
-                    task.doFirst { _ ->
-                        val podBuildSettings = project.getPodBuildSettingsProperties(binary.target, pod)
-                        binary.linkerOpts.addAll(podBuildSettings.frameworkSearchPaths.map { "-F$it" })
-                        if (setRPath) {
-                            binary.linkerOpts.addAll(podBuildSettings.frameworkSearchPaths.flatMap { listOf("-rpath", it) })
-                        }
+            binary.linkTaskProvider.configure { task ->
+
+                val podBuildTaskProvider = project.getPodBuildTaskProvider(binary.target, pod)
+                task.inputs.file(podBuildTaskProvider.map { it.buildSettingsFile })
+                task.dependsOn(podBuildTaskProvider)
+
+                task.doFirst { _ ->
+                    val podBuildSettings = project.getPodBuildSettingsProperties(binary.target, pod)
+                    binary.linkerOpts.addAll(podBuildSettings.frameworkSearchPaths.map { "-F$it" })
+                    if (setRPath) {
+                        binary.linkerOpts.addAll(podBuildSettings.frameworkSearchPaths.flatMap { listOf("-rpath", it) })
                     }
                 }
             }
