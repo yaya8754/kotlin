@@ -25,8 +25,6 @@ import org.jetbrains.kotlin.resolve.DescriptorUtils.getContainingClass
 import org.jetbrains.kotlin.resolve.constants.ConstantValue
 import org.jetbrains.kotlin.resolve.constants.EnumValue
 import org.jetbrains.kotlin.resolve.isInlineClass
-import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
-import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.types.checker.KotlinTypeRefiner
@@ -200,7 +198,9 @@ fun ValueParameterDescriptor.declaresOrInheritsDefaultValue(): Boolean {
     )
 }
 
-fun Annotated.isRepeatableAnnotation(): Boolean =
+// Note that on JVM, an annotation class is also considered repeatable if it's annotated with java.lang.annotation.Repeatable.
+// See JvmPlatformAnnotationFeaturesSupport.
+fun Annotated.isAnnotatedWithKotlinRepeatable(): Boolean =
     annotations.findAnnotation(StandardNames.FqNames.repeatable) != null
 
 fun Annotated.isDocumentedAnnotation(): Boolean =
