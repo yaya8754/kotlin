@@ -92,7 +92,8 @@ class ClassicJsFrontend internal constructor(
             analyzer,
             configuration,
             libraries,
-            friendLibraries
+            friendLibraries,
+            EmptyLoweringsCacheProvider
         )
 
         val analysisResult = descriptors.runAnalysis(configuration.get(JSConfigurationKeys.ERROR_TOLERANCE_POLICY) ?: ErrorTolerancePolicy.DEFAULT)

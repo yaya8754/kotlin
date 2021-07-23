@@ -41,7 +41,8 @@ class IncrementalFirJvmCompilerRunner(
     modulesApiHistory: ModulesApiHistory,
     kotlinSourceFilesExtensions: List<String> = DEFAULT_KOTLIN_SOURCE_FILES_EXTENSIONS
 ) : IncrementalJvmCompilerRunner(
-    workingDir, reporter, usePreciseJavaTracking, buildHistoryFile, outputFiles, modulesApiHistory, kotlinSourceFilesExtensions
+    workingDir, reporter, usePreciseJavaTracking, buildHistoryFile, outputFiles, modulesApiHistory, kotlinSourceFilesExtensions,
+    ClasspathChanges.NotAvailable.UnableToCompute
 )
 {
 
