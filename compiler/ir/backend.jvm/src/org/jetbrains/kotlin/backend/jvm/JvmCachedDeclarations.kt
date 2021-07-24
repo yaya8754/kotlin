@@ -284,6 +284,9 @@ class JvmCachedDeclarations(
                 createImplicitParameterDeclarationWithWrappedDescriptor()
                 parent = annotationClass
                 superTypes = listOf(context.irBuiltIns.annotationType)
+                context.createJvmIrBuilder(symbol).run {
+                    annotations = listOf(irCall(backendContext.ir.symbols.repeatableContainer.constructors.single()))
+                }
             }
 
             val propertyName = Name.identifier("value")
