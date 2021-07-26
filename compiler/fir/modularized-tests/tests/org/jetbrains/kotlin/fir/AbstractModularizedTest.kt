@@ -9,7 +9,9 @@ import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.config.KotlinSourceRoot
 import org.jetbrains.kotlin.cli.jvm.config.addJavaSourceRoots
 import org.jetbrains.kotlin.cli.jvm.config.addJvmClasspathRoots
+import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.fir.scopes.ProcessorAction
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.testFramework.KtUsefulTestCase
@@ -89,6 +91,7 @@ abstract class AbstractModularizedTest : KtUsefulTestCase() {
         val configuration = KotlinTestUtils.newConfiguration()
         configuration.addJavaSourceRoots(moduleData.javaSourceRoots)
         configuration.addJvmClasspathRoots(moduleData.classpath)
+        configuration.put(JVMConfigurationKeys.NO_JDK, true)
 
         configuration.addAll(
             CLIConfigurationKeys.CONTENT_ROOTS,
