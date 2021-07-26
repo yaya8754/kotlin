@@ -102,3 +102,6 @@ org.jetbrains.kotlin.jps.build.IncrementalJvmJpsTestGenerated.WithJava.JavaUsedI
 org.jetbrains.kotlin.jps.build.IncrementalJvmJpsTestGenerated.WithJava.JavaUsedInKotlin.SamConversions.testMethodSignatureChanged, KT-44844 fixed in IDEA 212,,
 org.jetbrains.kotlin.jps.build.IncrementalJvmJpsTestGenerated.WithJava.JavaUsedInKotlin.SamConversions.testMethodSignatureChangedSamAdapter, KT-44844 fixed in IDEA 212,,
 org.jetbrains.kotlin.jps.build.IncrementalJvmJpsTestGenerated.WithJava.JavaUsedInKotlin.SamConversions.testMethodAddDefault, KT-45191 fixed in IDEA 212,,
+org.jetbrains.kotlin.resolve.constants.evaluate.CompileTimeConstantEvaluatorTestGenerated.Constant.testCompareTo, KT-47898,,
+org.jetbrains.kotlin.resolve.constants.evaluate.CompileTimeConstantEvaluatorTestGenerated.Constant.testEquals, KT-47898,,
+org.jetbrains.kotlin.resolve.constants.evaluate.CompileTimeConstantEvaluatorTestGenerated.UsesVariableAsConstant.testBinaryTypes, KT-47898,,
