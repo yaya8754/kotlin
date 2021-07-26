@@ -33,6 +33,7 @@ public class IncorrectDereferenceException : RuntimeException {
 /**
  * Exception thrown when there was an error during file initalization.
  */
+@ExperimentalStdlibApi
 public class FileFailedToInitializeException : RuntimeException {
     constructor() : super()
 

@@ -16,6 +16,7 @@ val y: String = computeY()
 fun computeY(): String = "qzz"
 
 // FILE: main.kt
+@OptIn(ExperimentalStdlibApi::class)
 fun main() {
     try {
         println(x)

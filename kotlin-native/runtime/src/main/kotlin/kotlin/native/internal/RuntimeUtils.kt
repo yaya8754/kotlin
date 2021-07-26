@@ -106,6 +106,7 @@ internal fun ThrowIncorrectDereferenceException() {
 }
 
 @ExportForCppRuntime
+@OptIn(ExperimentalStdlibApi::class)
 internal fun ThrowFileFailedToInitializeException() {
     throw FileFailedToInitializeException("There was an error during file initialization")
 }
