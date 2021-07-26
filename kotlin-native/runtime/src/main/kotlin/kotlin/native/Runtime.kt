@@ -31,6 +31,15 @@ public class IncorrectDereferenceException : RuntimeException {
 }
 
 /**
+ * Exception thrown when there was an error during file initalization.
+ */
+public class FileFailedToInitializeException : RuntimeException {
+    constructor() : super()
+
+    constructor(message: String) : super(message)
+}
+
+/**
  * Typealias describing custom exception reporting hook.
  */
 public typealias ReportUnhandledExceptionHook = Function1<Throwable, Unit>

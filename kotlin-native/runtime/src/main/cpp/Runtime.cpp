@@ -376,15 +376,20 @@ void Kotlin_Debugging_setForceCheckedShutdown(KBoolean value) {
 static constexpr int FILE_NOT_INITIALIZED = 0;
 static constexpr int FILE_BEING_INITIALIZED = 1;
 static constexpr int FILE_INITIALIZED = 2;
+static constexpr int FILE_FAILED_TO_INITIALIZE = 3;
 
 void CallInitGlobalPossiblyLock(int volatile* state, void (*init)(bool)) {
     int localState = *state;
     if (localState == FILE_INITIALIZED) return;
+    if (localState == FILE_FAILED_TO_INITIALIZE)
+        ThrowFileFailedToInitializeException();
     int threadId = konan::currentThreadId();
     if ((localState & 3) == FILE_BEING_INITIALIZED) {
         if ((localState & ~3) != (threadId << 2)) {
             do {
                 localState = *state;
+                if (localState == FILE_FAILED_TO_INITIALIZE)
+                    ThrowFileFailedToInitializeException();
             } while (localState != FILE_INITIALIZED);
         }
         return;
@@ -394,19 +399,30 @@ void CallInitGlobalPossiblyLock(int volatile* state, void (*init)(bool)) {
         try {
             init(threadId == mainThreadId);
         } catch (...) {
-            *state = FILE_INITIALIZED;
+            *state = FILE_FAILED_TO_INITIALIZE;
+            throw;
         }
         *state = FILE_INITIALIZED;
     } else {
         do {
             localState = *state;
+            if (localState == FILE_FAILED_TO_INITIALIZE)
+                ThrowFileFailedToInitializeException();
         } while (localState != FILE_INITIALIZED);
     }
 }
 
-void CallInitThreadLocal(int* state, void (*init)(bool)) {
-    *state = FILE_INITIALIZED;
-    init(konan::currentThreadId() == mainThreadId);
+void CallInitThreadLocal(int volatile* globalState, int* localState, void (*init)(bool)) {
+    if (*localState == FILE_FAILED_TO_INITIALIZE || (globalState != nullptr && *globalState == FILE_FAILED_TO_INITIALIZE))
+        ThrowFileFailedToInitializeException();
+    *localState = FILE_INITIALIZED;
+    try {
+        init(konan::currentThreadId() == mainThreadId);
+    } catch(...) {
+        *localState = FILE_FAILED_TO_INITIALIZE;
+        *globalState = FILE_FAILED_TO_INITIALIZE;
+        throw;
+    }
 }
 
 }  // extern "C"

@@ -2317,7 +2317,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
         positionAtEnd(bbCheckLocalState)
         condBr(icmpEq(load(localStatePtr), Int32(FILE_NOT_INITIALIZED).llvm), bbInit, bbExit)
         positionAtEnd(bbInit)
-        call(context.llvm.callInitThreadLocal, listOf(localStatePtr, initializerPtr),
+        call(context.llvm.callInitThreadLocal, listOf(globalStatePtr, localStatePtr, initializerPtr),
                 exceptionHandler = currentCodeContext.exceptionHandler)
         br(bbExit)
         positionAtEnd(bbExit)
@@ -2333,7 +2333,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
         val bbExit = basicBlock("label_continue", null)
         condBr(icmpEq(load(statePtr), Int32(FILE_INITIALIZED).llvm), bbExit, bbInit)
         positionAtEnd(bbInit)
-        call(context.llvm.callInitThreadLocal, listOf(statePtr, initializerPtr),
+        call(context.llvm.callInitThreadLocal, listOf(kNullInt32Ptr, statePtr, initializerPtr),
                 exceptionHandler = currentCodeContext.exceptionHandler)
         br(bbExit)
         positionAtEnd(bbExit)

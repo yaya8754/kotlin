@@ -1397,6 +1397,24 @@ standaloneTest("initializers_workers2") {
     goldValue = "42\n42\n"
 }
 
+standaloneTest("initializers_failInInitializer1") {
+    source = "codegen/initializers/failInInitializer1.kt"
+    goldValue = "caught\n"
+    flags = ['-Xir-property-lazy-initialization']
+}
+
+standaloneTest("initializers_failInInitializer2") {
+    source = "codegen/initializers/failInInitializer2.kt"
+    goldValue = "caught\ncaught2\n"
+    flags = ['-Xir-property-lazy-initialization']
+}
+
+standaloneTest("initializers_failInInitializer3") {
+    source = "codegen/initializers/failInInitializer3.kt"
+    goldValue = "caught\ncaught2\n"
+    flags = ['-Xir-property-lazy-initialization']
+}
+
 linkTest("initializers_linkTest1") {
     goldValue = "1200\n"
     source = "codegen/initializers/linkTest1_main.kt"
