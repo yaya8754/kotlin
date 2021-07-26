@@ -165,7 +165,7 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
             declaration.realOverrideTarget.let {
                 val implClassDeclaration = it.parent as IrClass
 
-                if (implClassDeclaration.shouldCopyFrom()) {
+                if (implClassDeclaration.shouldCopyFrom() && !implClassDeclaration.defaultType.isFunctionType()) {
                     val implMethodName = context.getNameForMemberFunction(it)
                     val implClassName = context.getNameForClass(implClassDeclaration)
 
@@ -245,7 +245,7 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
             JsArrayLiteral(
                 irClass.superTypes.mapNotNull {
                     val symbol = it.classifierOrFail as IrClassSymbol
-                    val isFunctionType = it.run { isFunctionOrKFunction() || isSuspendFunctionOrKFunction() }
+                    val isFunctionType = it.isFunctionType()
                     // TODO: make sure that there is a test which breaks when isExternal is used here instead of isEffectivelyExternal
                     val requireInMetadata = if (context.staticContext.backendContext.baseClassIntoMetadata)
                         !it.isAny()
@@ -259,6 +259,8 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
             )
         )
     }
+
+    private fun IrType.isFunctionType() = isFunctionOrKFunction() || isSuspendFunctionOrKFunction()
 
     private fun generateAssociatedKeyProperties(): List<JsPropertyInitializer> {
         var result = emptyList<JsPropertyInitializer>()
