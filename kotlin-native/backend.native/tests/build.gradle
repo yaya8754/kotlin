@@ -1415,6 +1415,12 @@ standaloneTest("initializers_failInInitializer3") {
     flags = ['-Xir-property-lazy-initialization']
 }
 
+standaloneTest("initializers_failInInitializer4") {
+    source = "codegen/initializers/failInInitializer4.kt"
+    goldValue = "caught\ncaught2\n"
+    flags = ['-Xir-property-lazy-initialization']
+}
+
 linkTest("initializers_linkTest1") {
     goldValue = "1200\n"
     source = "codegen/initializers/linkTest1_main.kt"

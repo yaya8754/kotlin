@@ -2315,7 +2315,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
         // thread locals can be initialized only after all shared globals have been initialized.
         condBr(icmpNe(globalState, Int32(FILE_INITIALIZED).llvm), bbExit, bbCheckLocalState)
         positionAtEnd(bbCheckLocalState)
-        condBr(icmpEq(load(localStatePtr), Int32(FILE_NOT_INITIALIZED).llvm), bbInit, bbExit)
+        condBr(icmpNe(load(localStatePtr), Int32(FILE_INITIALIZED).llvm), bbInit, bbExit)
         positionAtEnd(bbInit)
         call(context.llvm.callInitThreadLocal, listOf(globalStatePtr, localStatePtr, initializerPtr),
                 exceptionHandler = currentCodeContext.exceptionHandler)

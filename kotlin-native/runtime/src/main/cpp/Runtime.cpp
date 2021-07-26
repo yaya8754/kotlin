@@ -420,8 +420,6 @@ void CallInitThreadLocal(int volatile* globalState, int* localState, void (*init
         init(konan::currentThreadId() == mainThreadId);
     } catch(...) {
         *localState = FILE_FAILED_TO_INITIALIZE;
-        if (globalState != nullptr)
-            *globalState = FILE_FAILED_TO_INITIALIZE;
         throw;
     }
 }
