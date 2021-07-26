@@ -95,8 +95,9 @@ rootProject.project("kotlin-native").ext.platformManager.enabled.each { target -
         libTask.configure {
             it.dependsOn df.config.depends.collect { defFileToLibName(targetName, it) }
             it.dependsOn ":kotlin-native:${targetName}CrossDist"
-            it.enableParallel = project.findProperty("kotlin.native.platformLibs.parallel")?.toString()?.toBoolean()
-                    ?: HostManager.host != KonanTarget.MACOS_ARM64
+            it.enableParallel = project.hasProperty("kotlin.native.platformLibs.parallel")
+                    ? project.findProperty("kotlin.native.platformLibs.parallel")?.toString()?.toBoolean()
+                    : HostManager.host != KonanTarget.MACOS_ARM64
         }
 
         def klibInstallTask = tasks.register("$libName", KlibInstall) {
