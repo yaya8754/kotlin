@@ -43,8 +43,7 @@ private String defFileToLibName(String target, String name) {
 }
 //#endregion
 
-
-if (HostManager.host == KonanTarget.MACOS_ARM64) {
+if (HostManager.host == "macos_arm64") {
     java {
         toolchain {
             languageVersion = JavaLanguageVersion.of(17)
@@ -97,7 +96,7 @@ rootProject.project("kotlin-native").ext.platformManager.enabled.each { target -
             it.dependsOn ":kotlin-native:${targetName}CrossDist"
             it.enableParallel = project.hasProperty("kotlin.native.platformLibs.parallel")
                     ? project.findProperty("kotlin.native.platformLibs.parallel")?.toString()?.toBoolean()
-                    : HostManager.host != KonanTarget.MACOS_ARM64
+                    : HostManager.host != "macos_arm64"
         }
 
         def klibInstallTask = tasks.register("$libName", KlibInstall) {
